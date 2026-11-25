@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS customers (
   name TEXT NOT NULL DEFAULT '',
   password_hash TEXT,
   google_sub TEXT UNIQUE,
+  avatar TEXT,
+  birth_date TEXT,
   created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS customer_sessions (

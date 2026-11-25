@@ -33,3 +33,7 @@ export const uploadImage = async (blob) => {
   })
   return url
 }
+export const updateProfile = (data) => send('/api/cuenta/perfil', 'PUT', data)
+export const uploadAvatar = (blob) =>
+  request('/api/cuenta/foto', { method: 'POST', headers: { 'Content-Type': blob.type }, body: blob })
+export const removeAvatar = () => request('/api/cuenta/foto', { method: 'DELETE' })

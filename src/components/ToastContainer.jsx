@@ -20,7 +20,7 @@ export default function ToastContainer() {
   if (toasts.length === 0) return null
 
   return (
-    <div className="pointer-events-none fixed bottom-6 right-6 z-[100] flex flex-col gap-3">
+    <div className="pointer-events-none fixed right-4 top-20 z-[100] max-w-[calc(100vw-2rem)] md:right-6 flex flex-col gap-3">
       {toasts.map((t) => {
         const Icon = ICONS[t.type] || Info
         return (

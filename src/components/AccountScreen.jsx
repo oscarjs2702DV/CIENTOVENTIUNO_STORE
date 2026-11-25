@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { ArrowRight, LogOut, Mail, User } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ArrowRight, Mail } from 'lucide-react'
 import { useCustomer } from '../store/customerStore'
 import { useUI } from '../store/uiStore'
 
@@ -14,41 +14,6 @@ function GoogleLogo() {
       <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z" />
       <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
     </svg>
-  )
-}
-
-function SignedIn({ user }) {
-  const signOut = useCustomer((s) => s.signOut)
-  const backToStore = useUI((s) => s.backToStore)
-  const [leaving, setLeaving] = useState(false)
-
-  const handleSignOut = async () => {
-    setLeaving(true)
-    try { await signOut() } finally { setLeaving(false) }
-  }
-
-  return (
-    <div className="flex flex-col items-center gap-6 text-center">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-plum/40 text-grape">
-        <User size={36} />
-      </div>
-      <div>
-        <h1 className="font-display text-4xl uppercase tracking-widest2 text-white">
-          Hola{user.name ? `, ${user.name}` : ''}
-        </h1>
-        <p className="mt-2 font-body text-chalk/70">{user.email}</p>
-        {user.google && <p className="mt-1 font-body text-xs text-chalk/40">Entras con Google</p>}
-      </div>
-      <p className="max-w-sm font-body text-sm text-chalk/60">
-        Pronto podrás ver aquí tus pedidos y tus datos de envío.
-      </p>
-      <div className="flex flex-wrap justify-center gap-3">
-        <button onClick={backToStore} className="btn-primary">Seguir comprando</button>
-        <button onClick={handleSignOut} disabled={leaving} className="btn-ghost disabled:opacity-50">
-          <LogOut size={18} /> {leaving ? 'Saliendo...' : 'Cerrar sesión'}
-        </button>
-      </div>
-    </div>
   )
 }
 
@@ -143,11 +108,15 @@ function SignedOut() {
 
 export default function AccountScreen() {
   const { user, loading } = useCustomer()
+  const backToStore = useUI((s) => s.backToStore)
+  // Con sesión abierta no hace falta esta pantalla: se vuelve a la tienda y
+  // el aviso pequeño de arriba confirma el ingreso.
+  useEffect(() => { if (!loading && user) backToStore() }, [loading, user, backToStore])
   return (
     <section className="flex min-h-screen items-center justify-center bg-ink px-5 pb-24 pt-32">
-      {loading ? (
+      {loading || user ? (
         <p className="font-display text-2xl uppercase tracking-widest2 text-chalk/50">Cargando...</p>
-      ) : user ? <SignedIn user={user} /> : <SignedOut />}
+      ) : <SignedOut />}
     </section>
   )
 }

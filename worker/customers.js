@@ -1,3 +1,5 @@
+import { sendWelcome } from './welcome.js'
+
 // Cuentas de clientes: correo y contraseña, o Google.
 // La sesión es un token aleatorio en la cookie __Host-cliente; en la base solo
 // se guarda su huella SHA-256, así que una copia de la base no abre sesiones.
@@ -6,6 +8,8 @@ const GOOGLE_COOKIE = '__Host-google'
 const SESSION_DAYS = 30
 const PBKDF2_ROUNDS = 100000 // máximo que permite Workers
 const enc = new TextEncoder()
+const AVATAR_TYPES = { 'image/webp': 'webp', 'image/jpeg': 'jpg', 'image/png': 'png' }
+const MAX_AVATAR = 400 * 1024
 
 export class CustomerError extends Error {
   constructor(message, status = 400) { super(message); this.status = status }
@@ -39,7 +43,14 @@ function ensureSchema(env) {
       customer_id TEXT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
       expires_at INTEGER NOT NULL)`),
     env.DB.prepare('CREATE INDEX IF NOT EXISTS customer_sessions_customer ON customer_sessions(customer_id)'),
-  ]).catch((err) => { schemaReady = undefined; throw err })
+  ]).then(async () => {
+    // Columnas añadidas después: si ya existen, D1 avisa y se ignora.
+    for (const col of ['avatar TEXT', 'birth_date TEXT']) {
+      await env.DB.prepare(`ALTER TABLE customers ADD COLUMN ${col}`).run().catch((err) => {
+        if (!/duplicate column/i.test(String(err?.message))) throw err
+      })
+    }
+  }).catch((err) => { schemaReady = undefined; throw err })
   return schemaReady
 }
 
@@ -78,7 +89,28 @@ function password(value) {
 }
 
 const cleanName = (value) => (typeof value === 'string' ? value.trim().replace(/\s+/g, ' ').slice(0, 80) : '')
-const publicCustomer = (c) => ({ name: c.name, email: c.email, google: Boolean(c.google_sub) })
+const publicCustomer = (c) => ({
+  name: c.name,
+  email: c.email,
+  google: Boolean(c.google_sub),
+  avatar: c.avatar || null,
+  birthDate: c.birth_date || null,
+})
+
+// Fecha de nacimiento AAAA-MM-DD; con ella el sistema calcula la edad.
+function birthDate(value) {
+  if (value === null || value === '') return null
+  const m = typeof value === 'string' && value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  const d = m && new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]))
+  if (!d || d.getUTCDate() !== +m[3] || d.getUTCMonth() !== +m[2] - 1) throw new CustomerError('Fecha de nacimiento no válida')
+  const now = new Date()
+  let age = now.getUTCFullYear() - d.getUTCFullYear()
+  if (now.getUTCMonth() < d.getUTCMonth() || (now.getUTCMonth() === d.getUTCMonth() && now.getUTCDate() < d.getUTCDate())) age--
+  if (age < 13 || age > 110) throw new CustomerError('Revisa tu fecha de nacimiento (debes tener al menos 13 años)')
+  return value
+}
+
+const avatarKey = (url) => url?.match(/^\/img\/(avatar-[0-9a-f-]+\.(webp|jpg|png))$/)?.[1]
 
 async function startSession(env, customerId) {
   const token = randomHex(32)
@@ -151,7 +183,7 @@ function decodeJwtPayload(jwt) {
   } catch { return null }
 }
 
-async function googleReturn(request, env, url) {
+async function googleReturn(request, env, url, ctx) {
   const saved = readCookie(request, GOOGLE_COOKIE)?.match(/^([0-9a-f]{32})\.([0-9a-f]{64})$/)
   const state = url.searchParams.get('state') || ''
   const code = url.searchParams.get('code')
@@ -183,6 +215,7 @@ async function googleReturn(request, env, url) {
 
   await ensureSchema(env)
   const mail = t.email.trim().toLowerCase()
+  let isNew = false
   let customer = await env.DB.prepare('SELECT * FROM customers WHERE google_sub = ?').bind(t.sub).first()
   if (!customer) {
     customer = await env.DB.prepare('SELECT * FROM customers WHERE email = ?').bind(mail).first()
@@ -198,18 +231,20 @@ async function googleReturn(request, env, url) {
       customer = { id: crypto.randomUUID() }
       await env.DB.prepare('INSERT INTO customers (id,email,name,google_sub,created_at) VALUES (?,?,?,?,?)')
         .bind(customer.id, mail, cleanName(t.name), t.sub, new Date().toISOString()).run()
+      isNew = true
+      sendWelcome(env, ctx, { name: cleanName(t.name), email: mail, origin: url.origin })
     }
   }
-  return back(`${url.origin}/#/cuenta`, 302, [await startSession(env, customer.id), clearCookie(GOOGLE_COOKIE)])
+  return back(`${url.origin}/?bienvenida=${isNew ? 'nuevo' : 'hola'}`, 302, [await startSession(env, customer.id), clearCookie(GOOGLE_COOKIE)])
 }
 
 // ---------- Rutas /api/cuenta/* ----------
-export async function handleCustomers(request, env, url, readJson, json) {
+export async function handleCustomers(request, env, url, readJson, json, ctx) {
   const path = url.pathname.slice('/api/cuenta'.length)
   const { method } = request
 
   if (path === '/google' && method === 'GET') return googleStart(request, env, url)
-  if (path === '/google/vuelta' && method === 'GET') return googleReturn(request, env, url)
+  if (path === '/google/vuelta' && method === 'GET') return googleReturn(request, env, url, ctx)
 
   // Evita que otra web use la sesión del cliente para hacer cambios.
   if (method !== 'GET' && request.headers.get('Origin') !== url.origin) throw new CustomerError('Origen no permitido', 403)
@@ -238,7 +273,8 @@ export async function handleCustomers(request, env, url, readJson, json) {
       'INSERT INTO customers (id,email,name,password_hash,created_at) VALUES (?,?,?,?,?) ON CONFLICT(email) DO NOTHING'
     ).bind(id, mail, name, hash, new Date().toISOString()).run()
     if (!r.meta.changes) throw new CustomerError('Ya existe una cuenta con ese correo. Ingresa o usa Google.', 409)
-    return withCookie({ user: { name, email: mail, google: false } }, await startSession(env, id))
+    sendWelcome(env, ctx, { name, email: mail, origin: url.origin })
+    return withCookie({ user: publicCustomer({ name, email: mail }) }, await startSession(env, id))
   }
 
   if (path === '/ingresar' && method === 'POST') {
@@ -258,6 +294,44 @@ export async function handleCustomers(request, env, url, readJson, json) {
       await env.DB.prepare('DELETE FROM customer_sessions WHERE token_hash = ?').bind(await sha256(token)).run()
     }
     return withCookie({ ok: true }, clearCookie(COOKIE))
+  }
+
+  // ---------- Perfil (requiere sesión) ----------
+  if (path === '/perfil' || path === '/foto') {
+    const c = await currentCustomer(request, env)
+    if (!c) throw new CustomerError('Tu sesión venció. Vuelve a ingresar.', 401)
+
+    if (path === '/perfil' && method === 'PUT') {
+      const b = await readJson(request)
+      const name = cleanName(b?.name)
+      if (!name) throw new CustomerError('Escribe tu nombre')
+      const birth = birthDate(b?.birthDate ?? null)
+      await env.DB.prepare('UPDATE customers SET name = ?, birth_date = ? WHERE id = ?').bind(name, birth, c.id).run()
+      return json({ user: publicCustomer({ ...c, name, birth_date: birth }) })
+    }
+
+    if (path === '/foto' && method === 'POST') {
+      await limited(request, env)
+      const type = (request.headers.get('Content-Type') || '').split(';')[0].trim()
+      if (!AVATAR_TYPES[type]) throw new CustomerError('La foto debe ser JPG, PNG o WebP')
+      if (Number(request.headers.get('Content-Length') || 0) > MAX_AVATAR) throw new CustomerError('La foto es demasiado grande', 413)
+      const data = await request.arrayBuffer()
+      if (!data.byteLength || data.byteLength > MAX_AVATAR) throw new CustomerError('La foto es demasiado grande', 413)
+      const key = `avatar-${crypto.randomUUID()}.${AVATAR_TYPES[type]}`
+      await env.FOTOS.put(key, data, { metadata: { type } })
+      const avatar = `/img/${key}`
+      const old = avatarKey(c.avatar)
+      await env.DB.prepare('UPDATE customers SET avatar = ? WHERE id = ?').bind(avatar, c.id).run()
+      if (old) await env.FOTOS.delete(old)
+      return json({ user: publicCustomer({ ...c, avatar }) })
+    }
+
+    if (path === '/foto' && method === 'DELETE') {
+      const old = avatarKey(c.avatar)
+      await env.DB.prepare('UPDATE customers SET avatar = NULL WHERE id = ?').bind(c.id).run()
+      if (old) await env.FOTOS.delete(old)
+      return json({ user: publicCustomer({ ...c, avatar: null }) })
+    }
   }
 
   throw new CustomerError('No encontrado', 404)

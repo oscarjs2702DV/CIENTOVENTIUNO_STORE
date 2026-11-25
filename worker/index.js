@@ -147,12 +147,12 @@ async function handleAdmin(request, env, url) {
   return fail('No encontrado', 404)
 }
 
-async function handle(request, env) {
+async function handle(request, env, ctx) {
   const url = new URL(request.url)
   const { pathname } = url
 
   if (pathname.startsWith('/api/admin/')) return handleAdmin(request, env, url)
-  if (pathname.startsWith('/api/cuenta/')) return handleCustomers(request, env, url, readJson, json)
+  if (pathname.startsWith('/api/cuenta/')) return handleCustomers(request, env, url, readJson, json, ctx)
 
   // La administración no tiene botón en la tienda: se entra escribiendo /admin.
   if ((pathname === '/admin' || pathname === '/admin/') && request.method === 'GET') {
@@ -185,9 +185,9 @@ async function handle(request, env) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     try {
-      return await handle(request, env)
+      return await handle(request, env, ctx)
     } catch (err) {
       if (err instanceof BadInput) return fail(err.message, 400)
       if (err instanceof CustomerError) return fail(err.message, err.status)

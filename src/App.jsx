@@ -8,6 +8,7 @@ import CartDrawer from './components/CartDrawer'
 import ProductDetail from './components/ProductDetail'
 import AuthScreen from './components/AuthScreen'
 import AccountScreen from './components/AccountScreen'
+import ProfileDialog from './components/ProfileDialog'
 import AdminDashboard from './components/AdminDashboard'
 import ToastContainer from './components/ToastContainer'
 import { useUI } from './store/uiStore'
@@ -64,6 +65,7 @@ export default function App() {
       <main>{content}</main>
       <Footer />
       <CartDrawer />
+      <ProfileDialog />
       <ToastContainer />
     </>
   )

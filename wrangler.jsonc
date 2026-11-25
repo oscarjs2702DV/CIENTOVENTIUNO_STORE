@@ -37,8 +37,8 @@
     ]
   },
   // Intentos de acceso por minuto y dirección IP: 5 para el administrador y
-  // 10 para clientes. Los secretos (ADMIN_KEY, GOOGLE_CLIENT_ID,
-  // GOOGLE_CLIENT_SECRET) se configuran en el panel de Cloudflare, nunca aquí.
+  // 10 para clientes. Los secretos (ADMIN_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
+  // y para el correo de bienvenida RESEND_API_KEY y MAIL_FROM) se configuran en el panel de Cloudflare, nunca aquí.
   "ratelimits": [
     { "name": "LOGIN_LIMIT", "namespace_id": "1210", "simple": { "limit": 5, "period": 60 } },
     { "name": "CUSTOMER_LIMIT", "namespace_id": "1211", "simple": { "limit": 10, "period": 60 } }

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ShoppingBag, Menu, X, User } from 'lucide-react'
 import { useCart } from '../store/cartStore'
 import { useUI } from '../store/uiStore'
 import { useCustomer } from '../store/customerStore'
+import AccountMenu, { Avatar } from './AccountMenu'
 
 const links = [
   { label: 'Inicio', view: 'inicio' },
@@ -19,6 +20,11 @@ export default function Header() {
   const backToStore = useUI((s) => s.backToStore)
   const goAccount = useUI((s) => s.goAccount)
   const customer = useCustomer((s) => s.user)
+  const accountOpen = useCustomer((s) => s.menuOpen)
+  const toggleMenu = useCustomer((s) => s.toggleMenu)
+  const accountButton = useRef(null)
+  // Con sesión abierta el ícono abre la ventana pequeña; sin sesión, el ingreso.
+  const handleAccount = () => (customer ? toggleMenu() : goAccount())
   const accountLabel = customer ? 'Mi cuenta' : 'Ingresar'
 
   useEffect(() => {
@@ -76,15 +82,21 @@ export default function Header() {
             ))}
           </nav>
 
-          <button
-            onClick={goAccount}
-            aria-label={accountLabel}
-            title={accountLabel}
-            className={`relative rounded-full p-2 transition-colors hover:text-grape ${view === 'cuenta' ? 'text-grape' : 'text-white'}`}
-          >
-            <User size={24} />
-            {customer && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-grape" aria-hidden="true" />}
-          </button>
+          <div className="relative">
+            <button
+              ref={accountButton}
+              onClick={handleAccount}
+              aria-label={accountLabel}
+              title={accountLabel}
+              aria-expanded={customer ? accountOpen : undefined}
+              className={`relative flex rounded-full p-2 transition-colors hover:text-grape ${view === 'cuenta' || accountOpen ? 'text-grape' : 'text-white'}`}
+            >
+              {customer ? (
+                <Avatar user={customer} size={28} className={`ring-2 ${accountOpen ? 'ring-grape' : 'ring-white/20'}`} />
+              ) : <User size={24} />}
+            </button>
+            <AccountMenu anchorRef={accountButton} />
+          </div>
 
           <button
             onClick={openCart}
@@ -131,7 +143,7 @@ export default function Header() {
                 </button>
               ))}
               <button
-                onClick={() => { goAccount(); setMenuOpen(false) }}
+                onClick={() => { handleAccount(); setMenuOpen(false) }}
                 className="mt-4 flex items-center gap-3 text-left font-display text-2xl uppercase tracking-widest2 text-chalk transition-colors hover:text-grape"
               >
                 <User size={22} /> {accountLabel}

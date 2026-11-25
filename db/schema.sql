@@ -11,3 +11,19 @@ CREATE TABLE IF NOT EXISTS products (
   reviews TEXT NOT NULL DEFAULT '[]',
   created_at TEXT NOT NULL
 );
+
+-- Cuentas de clientes. El servidor también las crea solo si faltan.
+CREATE TABLE IF NOT EXISTS customers (
+  id TEXT PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL DEFAULT '',
+  password_hash TEXT,
+  google_sub TEXT UNIQUE,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS customer_sessions (
+  token_hash TEXT PRIMARY KEY,
+  customer_id TEXT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  expires_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS customer_sessions_customer ON customer_sessions(customer_id);

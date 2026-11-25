@@ -7,19 +7,21 @@ import Footer from './components/Footer'
 import CartDrawer from './components/CartDrawer'
 import ProductDetail from './components/ProductDetail'
 import AuthScreen from './components/AuthScreen'
+import AccountScreen from './components/AccountScreen'
 import AdminDashboard from './components/AdminDashboard'
 import ToastContainer from './components/ToastContainer'
 import { useUI } from './store/uiStore'
 import { useAuth } from './store/authStore'
-
-const ADMIN_EMAIL = 'estebarin123@gmail.com'
+import { useCustomer } from './store/customerStore'
 
 export default function App() {
   const view = useUI((s) => s.view)
   const { init, user, loading } = useAuth()
-  const needsAuth = view === 'admin' || view === 'login'
+  const needsAuth = view === 'admin'
+  const initCustomer = useCustomer((s) => s.init)
 
   useEffect(() => { if (needsAuth) init() }, [needsAuth, init])
+  useEffect(() => { if (!needsAuth) initCustomer() }, [needsAuth, initCustomer])
 
   if (needsAuth && loading) {
     return (
@@ -44,6 +46,8 @@ export default function App() {
   let content
   if (view === 'product') {
     content = <ProductDetail />
+  } else if (view === 'cuenta') {
+    content = <AccountScreen />
   } else {
     content = (
       <>

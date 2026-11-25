@@ -1,9 +1,12 @@
 import { create } from 'zustand'
 
+// La administración vive en /admin (sin botón en la tienda); el resto usa
+// rutas con # para no recargar la página.
 function readHash() {
+  const path = window.location.pathname.replace(/\/+$/, '')
   const hash = window.location.hash.replace(/^#/, '')
-  if (hash === '/admin') return { view: 'admin', selectedProductId: null }
-  if (hash === '/login') return { view: 'login', selectedProductId: null }
+  if (path === '/admin') return { view: 'admin', selectedProductId: null }
+  if (hash === '/cuenta') return { view: 'cuenta', selectedProductId: null }
   if (hash.startsWith('/product/')) {
     const id = hash.replace('/product/', '')
     return { view: 'product', selectedProductId: id }
@@ -12,13 +15,12 @@ function readHash() {
 }
 
 function writeHash(view, selectedProductId) {
-  let hash = '#/'
-  if (view === 'admin') hash = '#/admin'
-  else if (view === 'login') hash = '#/login'
-  else if (view === 'product' && selectedProductId) hash = `#/product/${selectedProductId}`
-  if (window.location.hash !== hash) {
-    window.history.replaceState(null, '', hash)
-  }
+  let url = '/'
+  if (view === 'admin') url = '/admin'
+  else if (view === 'cuenta') url = '/#/cuenta'
+  else if (view === 'product' && selectedProductId) url = `/#/product/${selectedProductId}`
+  const { pathname, search, hash } = window.location
+  if (pathname + search + hash !== url) window.history.replaceState(null, '', url)
 }
 
 const initial = readHash()
@@ -42,9 +44,10 @@ export const useUI = create((set, get) => ({
     writeHash('admin', null)
     window.scrollTo({ top: 0, behavior: 'instant' })
   },
-  goLogin: () => {
-    set({ view: 'login' })
-    writeHash('login', null)
+  goAccount: () => {
+    set({ view: 'cuenta', selectedProductId: null })
+    writeHash('cuenta', null)
+    window.scrollTo({ top: 0, behavior: 'instant' })
   },
   syncFromHash: () => {
     const { view, selectedProductId } = readHash()

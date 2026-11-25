@@ -1,3 +1,4 @@
+import { CustomerError, handleCustomers } from './customers.js'
 import { checkKey, clearCookie, isAdmin, isConfigured, sessionCookie } from './session.js'
 
 const json = (data, status = 200) =>
@@ -151,6 +152,15 @@ async function handle(request, env) {
   const { pathname } = url
 
   if (pathname.startsWith('/api/admin/')) return handleAdmin(request, env, url)
+  if (pathname.startsWith('/api/cuenta/')) return handleCustomers(request, env, url, readJson, json)
+
+  // La administración no tiene botón en la tienda: se entra escribiendo /admin.
+  if ((pathname === '/admin' || pathname === '/admin/') && request.method === 'GET') {
+    const res = await env.ASSETS.fetch(new Request(new URL('/', url), request))
+    const page = new Response(res.body, res)
+    page.headers.set('Cache-Control', 'no-store')
+    return page
+  }
 
   if (pathname === '/api/products' && request.method === 'GET') {
     const { results } = await env.DB.prepare('SELECT * FROM products ORDER BY created_at DESC').all()
@@ -180,6 +190,7 @@ export default {
       return await handle(request, env)
     } catch (err) {
       if (err instanceof BadInput) return fail(err.message, 400)
+      if (err instanceof CustomerError) return fail(err.message, err.status)
       console.error(err)
       return fail('Error interno', 500)
     }

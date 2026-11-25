@@ -6,7 +6,6 @@ import { useUI } from '../store/uiStore'
 export default function AuthScreen() {
   const signIn = useAuth((s) => s.signIn)
   const backToStore = useUI((s) => s.backToStore)
-  const goAdmin = useUI((s) => s.goAdmin)
   const [key, setKey] = useState('')
   const [error, setError] = useState(null)
   const [sending, setSending] = useState(false)
@@ -17,7 +16,6 @@ export default function AuthScreen() {
     setSending(true)
     try {
       await signIn(key)
-      goAdmin()
     } catch (err) {
       setError(err.message)
       setSending(false)

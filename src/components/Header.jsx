@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ShoppingBag, Menu, X, User } from 'lucide-react'
 import { useCart } from '../store/cartStore'
 import { useUI } from '../store/uiStore'
+import { useCustomer } from '../store/customerStore'
 
 const links = [
   { label: 'Inicio', view: 'inicio' },
@@ -16,7 +17,9 @@ export default function Header() {
   const openCart = useCart((s) => s.open)
   const view = useUI((s) => s.view)
   const backToStore = useUI((s) => s.backToStore)
-  const goAdmin = useUI((s) => s.goAdmin)
+  const goAccount = useUI((s) => s.goAccount)
+  const customer = useCustomer((s) => s.user)
+  const accountLabel = customer ? 'Mi cuenta' : 'Ingresar'
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
@@ -43,7 +46,7 @@ export default function Header() {
     }
   }
 
-  const solidBg = scrolled || view === 'product' || view === 'admin' || view === 'login'
+  const solidBg = scrolled || view === 'product' || view === 'cuenta'
 
   return (
     <header
@@ -74,12 +77,13 @@ export default function Header() {
           </nav>
 
           <button
-            onClick={goAdmin}
-            aria-label="Iniciar sesión"
-            title="Iniciar sesión"
-            className="rounded-full p-2 text-white transition-colors hover:text-grape"
+            onClick={goAccount}
+            aria-label={accountLabel}
+            title={accountLabel}
+            className={`relative rounded-full p-2 transition-colors hover:text-grape ${view === 'cuenta' ? 'text-grape' : 'text-white'}`}
           >
             <User size={24} />
+            {customer && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-grape" aria-hidden="true" />}
           </button>
 
           <button
@@ -127,10 +131,10 @@ export default function Header() {
                 </button>
               ))}
               <button
-                onClick={() => { goAdmin(); setMenuOpen(false) }}
+                onClick={() => { goAccount(); setMenuOpen(false) }}
                 className="mt-4 flex items-center gap-3 text-left font-display text-2xl uppercase tracking-widest2 text-chalk transition-colors hover:text-grape"
               >
-                <User size={22} /> Iniciar sesión
+                <User size={22} /> {accountLabel}
               </button>
             </nav>
           </div>

@@ -31,11 +31,16 @@
     ],
     "kv_namespaces": [
       { "binding": "FOTOS", "id": "5d081128e32d4549b837a80151aee932" }
+    ],
+    "ratelimits": [
+      { "name": "CUSTOMER_LIMIT", "namespace_id": "1212", "simple": { "limit": 10, "period": 60 } }
     ]
   },
-  // Máximo 5 intentos de acceso por minuto y dirección IP. El secreto
-  // ADMIN_KEY se configura en el panel de Cloudflare, nunca en el código.
+  // Intentos de acceso por minuto y dirección IP: 5 para el administrador y
+  // 10 para clientes. Los secretos (ADMIN_KEY, GOOGLE_CLIENT_ID,
+  // GOOGLE_CLIENT_SECRET) se configuran en el panel de Cloudflare, nunca aquí.
   "ratelimits": [
-    { "name": "LOGIN_LIMIT", "namespace_id": "1210", "simple": { "limit": 5, "period": 60 } }
+    { "name": "LOGIN_LIMIT", "namespace_id": "1210", "simple": { "limit": 5, "period": 60 } },
+    { "name": "CUSTOMER_LIMIT", "namespace_id": "1211", "simple": { "limit": 10, "period": 60 } }
   ]
 }

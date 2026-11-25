@@ -16,24 +16,12 @@ const ADMIN_EMAIL = 'estebarin123@gmail.com'
 
 export default function App() {
   const view = useUI((s) => s.view)
-  const backToStore = useUI((s) => s.backToStore)
-  const goLogin = useUI((s) => s.goLogin)
-  const { init, user, profile, loading } = useAuth()
+  const { init, user, loading } = useAuth()
+  const needsAuth = view === 'admin' || view === 'login'
 
-  useEffect(() => { init() }, [])
+  useEffect(() => { if (needsAuth) init() }, [needsAuth, init])
 
-  const isAdmin = profile?.role === 'admin' || (user?.email?.toLowerCase() === ADMIN_EMAIL)
-
-  // Route protection: block non-admins from /admin
-  useEffect(() => {
-    if (view === 'admin' && !loading) {
-      if (!isAdmin) {
-        if (user) { backToStore() } else { goLogin() }
-      }
-    }
-  }, [view, loading, profile, user, backToStore, goLogin, isAdmin])
-
-  if (loading) {
+  if (needsAuth && loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-ink">
         <p className="font-display text-2xl uppercase tracking-widest2 text-chalk/50">Cargando...</p>
@@ -41,21 +29,12 @@ export default function App() {
     )
   }
 
-  // Admin gets its own standalone layout — no store header/footer/cart
-  if (view === 'admin') {
+  // Admin gets its own standalone layout — no store header/footer/cart.
+  // The server checks the session on every write; this only picks the screen.
+  if (needsAuth) {
     return (
       <>
-        {isAdmin ? <AdminDashboard /> : <AuthScreen />}
-        <ToastContainer />
-      </>
-    )
-  }
-
-  // Login screen also gets a minimal layout
-  if (view === 'login') {
-    return (
-      <>
-        <AuthScreen />
+        {user ? <AdminDashboard /> : <AuthScreen />}
         <ToastContainer />
       </>
     )

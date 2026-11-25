@@ -1,0 +1,29 @@
+{
+  "name": "cientoventiuno-store",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "preview_urls": true,
+  "observability": { "enabled": true },
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*", "/img/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cientoventiuno-db",
+      "database_id": "07656364-4dc0-4340-9f4d-de2a5b1b06a3"
+    }
+  ],
+  "kv_namespaces": [
+    { "binding": "FOTOS", "id": "5d081128e32d4549b837a80151aee932" }
+  ],
+  // Vacíos = panel de administración bloqueado. Se completan al activar
+  // Cloudflare Access (dominio del equipo y "Application Audience Tag").
+  "vars": {
+    "ACCESS_TEAM_DOMAIN": "",
+    "ACCESS_AUD": ""
+  }
+}

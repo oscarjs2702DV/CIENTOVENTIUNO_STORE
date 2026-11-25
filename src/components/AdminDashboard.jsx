@@ -3,7 +3,7 @@ import {
   Package, Boxes, AlertOctagon, Plus, Pencil, Trash2, X, LogOut,
   Store, Shield, Save, Upload, ImageIcon,
 } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { listProducts, createProduct, updateProduct, deleteProduct, uploadImage } from '../lib/api'
 import { useAuth } from '../store/authStore'
 import { useUI } from '../store/uiStore'
 import { useToast } from '../store/toastStore'
@@ -18,7 +18,7 @@ function getProductImage(product) {
 }
 
 export default function AdminDashboard() {
-  const { user, profile, signOut } = useAuth()
+  const { user, signOut } = useAuth()
   const backToStore = useUI((s) => s.backToStore)
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -27,18 +27,17 @@ export default function AdminDashboard() {
   const toast = useToast()
 
   const fetchProducts = useCallback(async () => {
-    const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false })
-    setProducts(data || [])
-    setLoading(false)
+    try {
+      setProducts(await listProducts())
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => {
     fetchProducts()
-    const channel = supabase
-      .channel('products-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => fetchProducts())
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
   }, [fetchProducts])
 
   const totalProducts = products.length
@@ -53,12 +52,12 @@ export default function AdminDashboard() {
     if (!confirmState) return
     const { id, name } = confirmState
     setConfirmState(null)
-    const { error } = await supabase.from('products').delete().eq('id', id)
-    if (error) {
-      toast.error('Error al eliminar: ' + error.message)
-    } else {
+    try {
+      await deleteProduct(id)
       toast.success(`"${name}" eliminado del catálogo`)
       fetchProducts()
+    } catch (err) {
+      toast.error('Error al eliminar: ' + err.message)
     }
   }
 
@@ -207,8 +206,6 @@ function MetricCard({ icon: Icon, label, value, color }) {
   )
 }
 
-const BUCKET = 'product-images'
-
 function compressImage(file, maxDim = 1200, quality = 0.82) {
   return new Promise((resolve, reject) => {
     const img = new Image()
@@ -230,29 +227,18 @@ function compressImage(file, maxDim = 1200, quality = 0.82) {
       canvas.height = height
       const ctx = canvas.getContext('2d')
       ctx.drawImage(img, 0, 0, width, height)
-      const outType = file.type === 'image/png' ? 'image/png' : 'image/jpeg'
       canvas.toBlob((blob) => {
         if (!blob) { reject(new Error('No se pudo comprimir la imagen')); return }
         resolve(blob)
-      }, outType, quality)
+      }, 'image/webp', quality)
     }
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('No se pudo cargar la imagen')) }
     img.src = url
   })
 }
 
-function isStorageUrl(str) {
-  return typeof str === 'string' && str.startsWith('http')
-}
-
-async function uploadImageToStorage(file, existingPath = null) {
-  const compressed = await compressImage(file)
-  const ext = file.type === 'image/png' ? 'png' : 'jpg'
-  const path = existingPath || `${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`
-  const { error } = await supabase.storage.from(BUCKET).upload(path, compressed, { contentType: file.type, upsert: false })
-  if (error) throw error
-  const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path)
-  return pub.publicUrl
+async function uploadImageToStorage(file) {
+  return uploadImage(await compressImage(file))
 }
 
 function ProductModal({ mode, product, onClose, onSaved }) {
@@ -377,7 +363,7 @@ function ProductModal({ mode, product, onClose, onSaved }) {
     setSaving(true)
     setError(null)
 
-    const hasImages = form.variants.some((v) => v.images.length > 0)
+    const hasImages = form.variants.every((v) => v.images.length > 0)
     if (!hasImages) {
       setError('Cada variante debe tener al menos una imagen')
       setSaving(false)
@@ -390,38 +376,27 @@ function ProductModal({ mode, product, onClose, onSaved }) {
       color: v.color || '#1a1a1a',
       images: v.images,
     }))
-    const allImages = cleanVariants.flatMap((v) => v.images)
-    const firstImage = allImages[0] || ''
 
     const payload = {
       name: form.name,
       category: form.category,
       description: form.description,
       price: parseInt(form.price) || 0,
-      image: firstImage,
-      gallery: allImages,
-      images: allImages,
       variants: cleanVariants,
       sizes,
       material: form.material,
       stock: parseInt(form.stock) || 0,
     }
 
-    let result
-    if (isEdit) {
-      result = await supabase.from('products').update(payload).eq('id', product.id)
-    } else {
-      payload.reviews = []
-      result = await supabase.from('products').insert(payload)
-    }
-
-    if (result.error) {
-      setError(result.error.message)
-      toast.error('Error al guardar: ' + result.error.message)
-      setSaving(false)
-    } else {
+    try {
+      if (isEdit) await updateProduct(product.id, payload)
+      else await createProduct(payload)
       toast.success(isEdit ? 'Producto actualizado con éxito' : 'Producto creado con éxito')
       onSaved()
+    } catch (err) {
+      setError(err.message)
+      toast.error('Error al guardar: ' + err.message)
+      setSaving(false)
     }
   }
 

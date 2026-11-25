@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import { ShoppingBag, Menu, X, LogIn, Shield, LogOut } from 'lucide-react'
+import { ShoppingBag, Menu, X } from 'lucide-react'
 import { useCart } from '../store/cartStore'
 import { useUI } from '../store/uiStore'
-import { useAuth } from '../store/authStore'
 
 const links = [
   { label: 'Inicio', view: 'inicio' },
@@ -17,11 +16,6 @@ export default function Header() {
   const openCart = useCart((s) => s.open)
   const view = useUI((s) => s.view)
   const backToStore = useUI((s) => s.backToStore)
-  const goLogin = useUI((s) => s.goLogin)
-  const goAdmin = useUI((s) => s.goAdmin)
-  const { user, profile, signOut } = useAuth()
-
-  const isAdmin = profile?.role === 'admin' || (user?.email?.toLowerCase() === 'estebarin123@gmail.com')
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
@@ -59,7 +53,7 @@ export default function Header() {
       <div className="mx-auto flex w-full max-w-[1920px] items-center justify-between px-4 py-4 lg:px-[100px] xl:px-[200px]">
         <button onClick={handleLogo} className="flex items-center">
           <img
-            src="https://raw.githubusercontent.com/Oskix2702/Cientoventiuno_E-COMMERS/master/assets/CIENTOVENTIUNO_LOGO.png"
+            src="/assets/logo.webp"
             alt="CIENTOVEINTIUNO"
             className="h-12 w-auto object-contain"
           />
@@ -77,38 +71,6 @@ export default function Header() {
               </button>
             ))}
           </nav>
-
-          {/* Auth buttons */}
-          <div className="hidden items-center gap-3 md:flex">
-            {user ? (
-              <>
-                {isAdmin && (
-                  <button
-                    onClick={goAdmin}
-                    className="flex items-center gap-1.5 font-display text-sm uppercase tracking-widest2 text-grape transition-colors hover:text-white"
-                  >
-                    <Shield size={16} />
-                    Admin
-                  </button>
-                )}
-                <button
-                  onClick={signOut}
-                  aria-label="Cerrar sesión"
-                  className="rounded-full p-2 text-chalk transition-colors hover:text-red-400"
-                >
-                  <LogOut size={20} />
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={goLogin}
-                className="flex items-center gap-1.5 font-display text-sm uppercase tracking-widest2 text-chalk transition-colors hover:text-grape"
-              >
-                <LogIn size={16} />
-                Ingresar
-              </button>
-            )}
-          </div>
 
           <button
             onClick={openCart}
@@ -154,35 +116,6 @@ export default function Header() {
                   {l.label}
                 </button>
               ))}
-              <div className="my-2 border-t border-white/10" />
-              {user ? (
-                <>
-                  {isAdmin && (
-                    <button
-                      onClick={() => { goAdmin(); setMenuOpen(false) }}
-                      className="flex items-center gap-2 text-left font-display text-xl uppercase tracking-widest2 text-grape"
-                    >
-                      <Shield size={18} />
-                      Panel Admin
-                    </button>
-                  )}
-                  <button
-                    onClick={() => { signOut(); setMenuOpen(false) }}
-                    className="flex items-center gap-2 text-left font-display text-xl uppercase tracking-widest2 text-red-400"
-                  >
-                    <LogOut size={18} />
-                    Cerrar sesión
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => { goLogin(); setMenuOpen(false) }}
-                  className="flex items-center gap-2 text-left font-display text-xl uppercase tracking-widest2 text-chalk"
-                >
-                  <LogIn size={18} />
-                  Ingresar
-                </button>
-              )}
             </nav>
           </div>
         </div>

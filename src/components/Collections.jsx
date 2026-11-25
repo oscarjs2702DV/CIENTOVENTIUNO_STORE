@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { ImageOff, Eye, ArrowRight } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { listProducts } from '../lib/api'
 import { formatCOP } from '../data/products'
 import { useUI } from '../store/uiStore'
 
@@ -75,24 +75,13 @@ function ProductCard({ product }) {
 export default function Collections() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false })
-      if (error) {
-        console.error('Error loading products:', error.message)
-      }
-      setProducts(data || [])
-      setLoading(false)
-    }
-    fetchProducts()
-
-    const channel = supabase
-      .channel('collections-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => fetchProducts())
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
+    listProducts()
+      .then(setProducts)
+      .catch(() => setError(true))
+      .finally(() => setLoading(false))
   }, [])
 
   return (
@@ -110,6 +99,10 @@ export default function Collections() {
         {loading ? (
           <div className="py-20 text-center font-display text-2xl uppercase tracking-widest2 text-chalk/50">
             Cargando productos...
+          </div>
+        ) : error || products.length === 0 ? (
+          <div className="py-20 text-center font-body text-chalk/60">
+            {error ? 'No pudimos cargar los productos. Recarga la página.' : 'Pronto habrá nuevos productos.'}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

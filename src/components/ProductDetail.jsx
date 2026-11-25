@@ -8,7 +8,7 @@ import {
   Star,
   ImageOff,
 } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { listProducts } from '../lib/api'
 import { formatCOP } from '../data/products'
 import { useCart } from '../store/cartStore'
 import { useUI } from '../store/uiStore'
@@ -83,28 +83,18 @@ export default function ProductDetail() {
     setShowWarning(false)
     setLoading(true)
 
-    const fetchProduct = async () => {
-      const { data } = await supabase.from('products').select('*').eq('id', productId).maybeSingle()
-      setProduct(data)
-      const { data: rel } = await supabase.from('products').select('*').neq('id', productId).limit(4)
-      setRelated(rel || [])
-      setLoading(false)
-    }
-    if (productId) fetchProduct()
-
-    const channel = supabase
-      .channel(`product-${productId}-realtime`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
-        if (payload.eventType === 'DELETE' && payload.old?.id === productId) {
-          backToStore()
-          return
-        }
-        fetchProduct()
+    let active = true
+    listProducts()
+      .then((all) => {
+        if (!active) return
+        setProduct(all.find((p) => p.id === productId) || null)
+        setRelated(all.filter((p) => p.id !== productId).slice(0, 4))
       })
-      .subscribe()
+      .catch(() => { if (active) setProduct(null) })
+      .finally(() => { if (active) setLoading(false) })
 
-    return () => { supabase.removeChannel(channel) }
-  }, [productId, backToStore])
+    return () => { active = false }
+  }, [productId])
 
   if (loading) {
     return (
@@ -114,7 +104,14 @@ export default function ProductDetail() {
     )
   }
 
-  if (!product) return null
+  if (!product) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-ink pt-20">
+        <p className="font-display text-2xl uppercase tracking-widest2 text-chalk/60">Producto no disponible</p>
+        <button onClick={backToStore} className="btn-primary">Volver a la tienda</button>
+      </div>
+    )
+  }
 
   const variants = normalizeVariants(product)
   const currentVariant = variants[activeVariant]

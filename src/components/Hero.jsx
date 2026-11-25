@@ -1,6 +1,6 @@
 import { ArrowDown } from 'lucide-react'
 
-const heroBg = 'https://raw.githubusercontent.com/Oskix2702/Cientoventiuno_E-COMMERS/master/assets/WEBSITE_MAIN/Image_Front.png'
+const heroBg = '/assets/hero.webp'
 
 export default function Hero() {
   return (

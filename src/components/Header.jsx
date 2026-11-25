@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ShoppingBag, Menu, X } from 'lucide-react'
+import { ShoppingBag, Menu, X, User } from 'lucide-react'
 import { useCart } from '../store/cartStore'
 import { useUI } from '../store/uiStore'
 
@@ -16,6 +16,7 @@ export default function Header() {
   const openCart = useCart((s) => s.open)
   const view = useUI((s) => s.view)
   const backToStore = useUI((s) => s.backToStore)
+  const goAdmin = useUI((s) => s.goAdmin)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
@@ -73,6 +74,15 @@ export default function Header() {
           </nav>
 
           <button
+            onClick={goAdmin}
+            aria-label="Iniciar sesión"
+            title="Iniciar sesión"
+            className="rounded-full p-2 text-white transition-colors hover:text-grape"
+          >
+            <User size={24} />
+          </button>
+
+          <button
             onClick={openCart}
             aria-label="Abrir carrito"
             className="relative rounded-full p-2 text-white transition-colors hover:text-grape"
@@ -116,6 +126,12 @@ export default function Header() {
                   {l.label}
                 </button>
               ))}
+              <button
+                onClick={() => { goAdmin(); setMenuOpen(false) }}
+                className="mt-4 flex items-center gap-3 text-left font-display text-2xl uppercase tracking-widest2 text-chalk transition-colors hover:text-grape"
+              >
+                <User size={22} /> Iniciar sesión
+              </button>
             </nav>
           </div>
         </div>

@@ -1,12 +1,11 @@
 async function request(path, options) {
   let res
   try {
-    // Con la sesión de Access vencida la respuesta es una redirección al login.
-    res = await fetch(path, { redirect: 'manual', ...options })
+    res = await fetch(path, options)
   } catch {
     throw new Error('No hay conexión con el servidor')
   }
-  if (res.type === 'opaqueredirect' || res.status === 401) {
+  if (res.status === 401) {
     throw new Error('Tu sesión venció. Vuelve a ingresar.')
   }
   const data = await res.json().catch(() => null)
@@ -19,6 +18,8 @@ const send = (path, method, body) =>
 
 export const listProducts = () => request('/api/products')
 export const getSession = () => request('/api/admin/session')
+export const login = (key) => send('/api/admin/login', 'POST', { key })
+export const logout = () => send('/api/admin/logout', 'POST', {})
 export const createProduct = (p) => send('/api/admin/products', 'POST', p)
 export const updateProduct = (id, p) => send(`/api/admin/products/${id}`, 'PUT', p)
 export const deleteProduct = (id) => request(`/api/admin/products/${id}`, { method: 'DELETE' })

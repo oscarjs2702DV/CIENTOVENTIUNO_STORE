@@ -1,4 +1,4 @@
-import { getAdmin } from './access.js'
+import { checkKey, clearCookie, isAdmin, isConfigured, sessionCookie } from './session.js'
 
 const json = (data, status = 200) =>
   Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } })
@@ -81,9 +81,25 @@ async function readImage(request) {
   return { type, data }
 }
 
+const ADMIN = { name: 'Administrador' }
+
+function withCookie(data, cookie) {
+  const res = json(data)
+  res.headers.append('Set-Cookie', cookie)
+  return res
+}
+
+async function handleLogin(request, env) {
+  if (!isConfigured(env) || !env.LOGIN_LIMIT) return fail('El acceso todavía no está configurado', 503)
+  const ip = request.headers.get('CF-Connecting-IP') || 'desconocida'
+  const { success } = await env.LOGIN_LIMIT.limit({ key: ip })
+  if (!success) return fail('Demasiados intentos. Espera un minuto.', 429)
+  const body = await readJson(request)
+  if (!(await checkKey(body?.key, env))) return fail('Clave incorrecta', 403)
+  return withCookie(ADMIN, await sessionCookie(env))
+}
+
 async function handleAdmin(request, env, url) {
-  const admin = await getAdmin(request, env)
-  if (!admin) return fail('No autorizado', 401)
   const { method } = request
   // Evita que otra web escriba usando la sesión del administrador.
   if (method !== 'GET' && request.headers.get('Origin') !== url.origin) {
@@ -91,8 +107,11 @@ async function handleAdmin(request, env, url) {
   }
   const path = url.pathname.slice('/api/admin'.length)
 
-  if (path === '/login' && method === 'GET') return Response.redirect(`${url.origin}/#/admin`, 302)
-  if (path === '/session' && method === 'GET') return json(admin)
+  if (path === '/login' && method === 'POST') return handleLogin(request, env)
+  if (path === '/logout' && method === 'POST') return withCookie({ ok: true }, clearCookie())
+
+  if (!(await isAdmin(request, env))) return fail('No autorizado', 401)
+  if (path === '/session' && method === 'GET') return json(ADMIN)
 
   if (path === '/images' && method === 'POST') {
     const { type, data } = await readImage(request)

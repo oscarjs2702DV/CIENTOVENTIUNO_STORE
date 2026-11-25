@@ -1,8 +1,8 @@
 import { create } from 'zustand'
-import { getSession } from '../lib/api'
+import { getSession, login, logout } from '../lib/api'
 
-// Solo el administrador inicia sesión (Cloudflare Access). Los clientes no
-// tienen cuenta, así que la tienda no consulta la sesión hasta que hace falta.
+// Solo el administrador inicia sesión. Los clientes no tienen cuenta, así que
+// la tienda no consulta la sesión hasta que hace falta.
 export const useAuth = create((set) => ({
   user: null,
   loading: true,
@@ -16,6 +16,10 @@ export const useAuth = create((set) => ({
     }
   },
 
-  signIn: () => window.location.assign('/api/admin/login'),
-  signOut: () => window.location.assign('/cdn-cgi/access/logout'),
+  signIn: async (key) => set({ user: await login(key) }),
+
+  signOut: async () => {
+    await logout()
+    set({ user: null })
+  },
 }))

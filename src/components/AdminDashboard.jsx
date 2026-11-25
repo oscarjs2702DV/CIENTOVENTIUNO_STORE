@@ -75,7 +75,7 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="hidden font-body text-sm text-chalk/60 sm:block">{user?.email}</span>
+            <span className="hidden font-body text-sm text-chalk/60 sm:block">{user?.name}</span>
             <button onClick={backToStore} className="flex items-center gap-1.5 border border-white/20 px-4 py-2 font-display text-sm uppercase tracking-widest2 text-chalk transition-colors hover:border-grape hover:text-grape">
               <Store size={16} /> Tienda
             </button>

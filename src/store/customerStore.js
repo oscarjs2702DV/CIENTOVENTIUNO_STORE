@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import {
   getCustomer, loginCustomer, logoutCustomer, registerCustomer, verifySignup, resendSignupCode,
-  removeAvatar, updateProfile, uploadAvatar,
+  removeAvatar, updateProfile, uploadAvatar, deleteAccount,
 } from '../lib/api'
 import { useToast } from './toastStore'
 import { useCart } from './cartStore'
@@ -77,6 +77,12 @@ export const useCustomer = create((set, get) => ({
     set({ user: null, menuOpen: false, profileOpen: false })
     useCart.getState().clear()
     useToast.getState().info('Cerraste sesión')
+  },
+  removeAccount: async (confirm) => {
+    await deleteAccount(confirm)
+    set({ user: null, menuOpen: false, profileOpen: false })
+    useCart.getState().clear()
+    useToast.getState().info('Tu cuenta fue eliminada')
   },
   saveProfile: async (data) => set({ user: (await updateProfile(data)).user }),
   setAvatar: async (blob) => set({ user: (await uploadAvatar(blob)).user }),

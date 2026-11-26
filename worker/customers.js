@@ -389,6 +389,23 @@ export async function handleCustomers(request, env, url, readJson, json, ctx) {
       return json({ user: publicCustomer({ ...c, name, birth_date: birth }) })
     }
 
+    // Borra la cuenta del cliente. Pide la palabra "eliminar" para evitar borrados por error.
+    // Los pedidos se conservan: son registros de venta de la tienda.
+    if (path === '/perfil' && method === 'DELETE') {
+      const b = await readJson(request)
+      if (String(b?.confirm || '').trim().toLowerCase() !== 'eliminar') {
+        throw new CustomerError('Escribe la palabra ELIMINAR para confirmar')
+      }
+      const old = avatarKey(c.avatar)
+      await env.DB.batch([
+        env.DB.prepare('DELETE FROM customer_sessions WHERE customer_id = ?').bind(c.id),
+        env.DB.prepare('DELETE FROM pending_signups WHERE email = ?').bind(c.email),
+        env.DB.prepare('DELETE FROM customers WHERE id = ?').bind(c.id),
+      ])
+      if (old) await env.FOTOS.delete(old)
+      return withCookie({ ok: true }, clearCookie(COOKIE))
+    }
+
     if (path === '/foto' && method === 'POST') {
       await limited(request, env)
       const type = (request.headers.get('Content-Type') || '').split(';')[0].trim()

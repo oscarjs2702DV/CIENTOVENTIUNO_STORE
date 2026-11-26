@@ -29,7 +29,9 @@ const today = new Date()
 const maxDate = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate()).toISOString().slice(0, 10)
 
 export default function ProfileDialog() {
-  const { user, profileOpen, closeProfile, saveProfile, setAvatar, deleteAvatar } = useCustomer()
+  const { user, profileOpen, closeProfile, saveProfile, setAvatar, deleteAvatar, removeAccount } = useCustomer()
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [word, setWord] = useState('')
   const toast = useToast()
   const [name, setName] = useState('')
   const [birthDate, setBirthDate] = useState('')
@@ -42,6 +44,8 @@ export default function ProfileDialog() {
     setName(user.name || '')
     setBirthDate(user.birthDate || '')
     setError(null)
+    setConfirmOpen(false)
+    setWord('')
     const onKey = (e) => { if (e.key === 'Escape') closeProfile() }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
@@ -129,6 +133,36 @@ export default function ProfileDialog() {
             {busy === 'guardar' ? 'Guardando...' : 'Guardar cambios'}
           </button>
         </form>
+
+        <div className="mt-8 border-t border-white/10 pt-5">
+          {!confirmOpen ? (
+            <button type="button" onClick={() => setConfirmOpen(true)}
+              className="flex items-center gap-2 font-body text-sm text-chalk/50 hover:text-red-300">
+              <Trash2 size={16} /> Eliminar mi cuenta
+            </button>
+          ) : (
+            <form onSubmit={(e) => { e.preventDefault(); run('eliminar', () => removeAccount(word)) }}
+              className="flex flex-col gap-3 border border-red-400/30 bg-red-950/20 p-4">
+              <p className="font-body text-sm font-bold text-red-200">¿Estás seguro de eliminar tu cuenta?</p>
+              <p className="font-body text-xs text-chalk/60">
+                Se borran tu perfil, tu foto y tus datos. No se puede deshacer.
+                Escribe <span className="font-bold text-white">ELIMINAR</span> para confirmar.
+              </p>
+              <input value={word} onChange={(e) => setWord(e.target.value)} autoComplete="off"
+                aria-label="Escribe ELIMINAR para confirmar" placeholder="ELIMINAR" className={field} />
+              <div className="flex gap-3">
+                <button type="button" onClick={() => { setConfirmOpen(false); setWord('') }}
+                  className="flex-1 border border-white/15 px-3 py-2.5 font-body text-sm text-chalk/80 hover:text-white">
+                  Cancelar
+                </button>
+                <button type="submit" disabled={word.trim().toLowerCase() !== 'eliminar' || busy === 'eliminar'}
+                  className="flex-1 bg-red-600 px-3 py-2.5 font-body text-sm font-bold text-white hover:bg-red-500 disabled:opacity-40">
+                  {busy === 'eliminar' ? 'Eliminando...' : 'Eliminar cuenta'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   )

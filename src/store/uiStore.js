@@ -7,6 +7,7 @@ function readHash() {
   const hash = window.location.hash.replace(/^#/, '')
   if (path === '/admin') return { view: 'admin', selectedProductId: null }
   if (hash === '/cuenta') return { view: 'cuenta', selectedProductId: null }
+  if (hash.startsWith('/info/')) return { view: 'info', selectedProductId: null, infoSlug: hash.slice(6) }
   if (hash.startsWith('/product/')) {
     const id = hash.replace('/product/', '')
     return { view: 'product', selectedProductId: id }
@@ -18,6 +19,7 @@ function writeHash(view, selectedProductId) {
   let url = '/'
   if (view === 'admin') url = '/admin'
   else if (view === 'cuenta') url = '/#/cuenta'
+  else if (view === 'info') return
   else if (view === 'product' && selectedProductId) url = `/#/product/${selectedProductId}`
   const { pathname, search, hash } = window.location
   if (pathname + search + hash !== url) window.history.replaceState(null, '', url)
@@ -28,6 +30,7 @@ const initial = readHash()
 export const useUI = create((set, get) => ({
   view: initial.view,
   selectedProductId: initial.selectedProductId,
+  infoSlug: initial.infoSlug || null,
 
   // Color con el que se abre el producto (el que se eligió en la tarjeta).
   initialVariant: 0,
@@ -52,8 +55,8 @@ export const useUI = create((set, get) => ({
     window.scrollTo({ top: 0, behavior: 'instant' })
   },
   syncFromHash: () => {
-    const { view, selectedProductId } = readHash()
-    set({ view, selectedProductId })
+    const { view, selectedProductId, infoSlug = null } = readHash()
+    set({ view, selectedProductId, infoSlug })
   },
 }))
 

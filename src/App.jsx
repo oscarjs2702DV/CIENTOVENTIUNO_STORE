@@ -8,6 +8,7 @@ import CartDrawer from './components/CartDrawer'
 import ProductDetail from './components/ProductDetail'
 import AuthScreen from './components/AuthScreen'
 import AccountScreen from './components/AccountScreen'
+import InfoPage from './components/InfoPage'
 import ProfileDialog from './components/ProfileDialog'
 import AdminDashboard from './components/AdminDashboard'
 import ToastContainer from './components/ToastContainer'
@@ -47,6 +48,8 @@ export default function App() {
   let content
   if (view === 'product') {
     content = <ProductDetail />
+  } else if (view === 'info') {
+    content = <InfoPage />
   } else if (view === 'cuenta') {
     content = <AccountScreen />
   } else {

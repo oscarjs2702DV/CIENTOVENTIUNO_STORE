@@ -378,8 +378,8 @@ export default function ProductDetail() {
             <div className="flex items-center gap-3 border border-white/10 bg-plum/20 px-5 py-4">
               <Truck size={24} className="flex-shrink-0 text-grape" />
               <div>
-                <p className="font-display text-base uppercase tracking-widest2 text-white">Envíos nacionales disponibles</p>
-                <p className="font-body text-sm text-chalk/60">Despacho en 2-3 días hábiles · Bogotá misma día</p>
+                <p className="font-display text-base uppercase tracking-widest2 text-white">Envío gratis a toda Colombia</p>
+                <p className="font-body text-sm text-chalk/60">En prendas de más de $70.000 · Despacho en 1-2 días hábiles</p>
               </div>
             </div>
 

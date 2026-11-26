@@ -1,12 +1,19 @@
-import { Instagram } from 'lucide-react'
+import { Instagram, Mail, MapPin, MessageCircle } from 'lucide-react'
+import { CONTACT, FOOTER_LINKS } from '../data/info'
 
-const INSTAGRAM = 'https://www.instagram.com/ciento21.clothing/'
+const linkCls = 'font-body text-sm text-chalk/60 transition-colors hover:text-grape'
 
 const cols = [
-  { title: 'Tienda', links: ['Colecciones', 'Novedades', 'Envíos', 'Devoluciones'] },
-  { title: 'Legal', links: ['Términos', 'Privacidad', 'Cookies', 'Aviso legal'] },
-  { title: 'Contacto', links: ['Bogotá, Colombia', 'hola@cientoventiuno.co', '+57 320 000 0000'] },
+  { title: 'Tienda', links: FOOTER_LINKS.tienda },
+  { title: 'Legal', links: FOOTER_LINKS.legal },
 ]
+
+const contact = [
+  { icon: MapPin, label: CONTACT.place, href: 'https://www.google.com/maps/search/?api=1&query=La+Caba%C3%B1a%2C+Fontib%C3%B3n%2C+Bogot%C3%A1' },
+  { icon: Mail, label: CONTACT.email, href: `mailto:${CONTACT.email}` },
+  CONTACT.whatsapp && { icon: MessageCircle, label: 'WhatsApp', href: `https://wa.me/${CONTACT.whatsapp}` },
+  { icon: Instagram, label: CONTACT.instagramUser, href: CONTACT.instagram },
+].filter(Boolean)
 
 export default function Footer() {
   return (
@@ -21,7 +28,7 @@ export default function Footer() {
               Viste con propósito
             </p>
             <p className="mt-3 font-body text-sm text-chalk/60">
-              Streetwear premium desde Bogotá, Colombia.
+              Ropa urbana con propósito, hecha en Fontibón, Bogotá.
             </p>
           </div>
 
@@ -31,19 +38,32 @@ export default function Footer() {
                 {c.title}
               </h4>
               <ul className="mt-4 space-y-2">
-                {c.links.map((l) => (
-                  <li key={l}>
-                    <a
-                      href="#"
-                      className="font-body text-sm text-chalk/60 transition-colors hover:text-grape"
-                    >
-                      {l}
-                    </a>
+                {c.links.map(([slug, label]) => (
+                  <li key={slug}>
+                    <a href={`#/info/${slug}`} className={linkCls}>{label}</a>
                   </li>
                 ))}
               </ul>
             </div>
           ))}
+
+          <div>
+            <h4 className="font-display text-lg uppercase tracking-widest2 text-white">Contacto</h4>
+            <ul className="mt-4 space-y-3">
+              {contact.map(({ icon: Icon, label, href }) => (
+                <li key={label}>
+                  <a
+                    href={href}
+                    {...(href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                    className={`flex items-start gap-2 break-all ${linkCls}`}
+                  >
+                    <Icon size={16} className="mt-0.5 flex-shrink-0 text-grape" />
+                    {label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-6 border-t border-white/10 pt-8 sm:flex-row">
@@ -53,14 +73,14 @@ export default function Footer() {
           </p>
           <div className="flex items-center gap-5">
             <a
-              href={INSTAGRAM}
+              href={CONTACT.instagram}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram de CIENTOVEINTIUNO"
               className="flex items-center gap-2 font-body text-sm text-chalk/60 transition-colors hover:text-grape"
             >
               <Instagram size={20} />
-              @ciento21.clothing
+              {CONTACT.instagramUser}
             </a>
           </div>
         </div>

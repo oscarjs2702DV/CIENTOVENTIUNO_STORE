@@ -12,6 +12,7 @@ import { listProducts } from '../lib/api'
 import { formatCOP } from '../data/products'
 import { useCart } from '../store/cartStore'
 import { useUI } from '../store/uiStore'
+import { normalizeVariants } from '../lib/variants'
 import { useToast } from '../store/toastStore'
 
 function Stars({ rating, size = 14 }) {
@@ -39,22 +40,6 @@ function Accordion({ title, children, defaultOpen = false }) {
   )
 }
 
-function normalizeVariants(product) {
-  if (!product.variants || product.variants.length === 0) {
-    const fallbackImages = (product.images && product.images.length > 0)
-      ? product.images
-      : (product.image ? [product.image] : [])
-    return [{ colorName: 'Único', color: '#1a1a1a', images: fallbackImages }]
-  }
-  return product.variants.map((v) => ({
-    colorName: v.colorName || v.name || 'Único',
-    color: v.color || '#1a1a1a',
-    images: (v.images && v.images.length > 0)
-      ? v.images
-      : (v.image ? [v.image] : (product.image ? [product.image] : [])),
-  }))
-}
-
 export default function ProductDetail() {
   const productId = useUI((s) => s.selectedProductId)
   const backToStore = useUI((s) => s.backToStore)
@@ -75,7 +60,7 @@ export default function ProductDetail() {
   const [showWarning, setShowWarning] = useState(false)
 
   useEffect(() => {
-    setActiveVariant(0)
+    setActiveVariant(useUI.getState().initialVariant || 0)
     setActiveImage(null)
     setSelectedSize(null)
     setAdded(false)
@@ -114,7 +99,7 @@ export default function ProductDetail() {
   }
 
   const variants = normalizeVariants(product)
-  const currentVariant = variants[activeVariant]
+  const currentVariant = variants[activeVariant] || variants[0]
   const gallery = currentVariant.images.length > 0 ? currentVariant.images : (product.image ? [product.image] : [])
   const resolvedActiveImage = activeImage || gallery[0] || product.image
   const selectedColor = currentVariant.colorName

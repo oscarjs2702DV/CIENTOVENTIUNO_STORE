@@ -1,3 +1,5 @@
+import Reveal from './Reveal'
+
 const aboutImg =
   'https://images.pexels.com/photos/35005242/pexels-photo-35005242.jpeg?auto=compress&cs=tinysrgb&w=900'
 
@@ -8,7 +10,7 @@ export default function About() {
       className="bg-plum/40 px-5 py-24 sm:px-8 md:py-32"
     >
       <div className="mx-auto grid max-w-7xl items-center gap-12 md:grid-cols-2 md:gap-16">
-        <div className="relative order-2 md:order-1">
+        <Reveal className="relative order-2 md:order-1">
           <div className="overflow-hidden ring-1 ring-white/15">
             <img
               src={aboutImg}
@@ -22,9 +24,9 @@ export default function About() {
               Bogotá · 121
             </span>
           </div>
-        </div>
+        </Reveal>
 
-        <div className="order-1 md:order-2">
+        <Reveal delay={150} className="order-1 md:order-2">
           <span className="font-script text-3xl text-grape">Quiénes somos</span>
           <h2 className="section-title mt-2">Streetwear con propósito</h2>
           <div className="mt-6 space-y-4 font-body text-chalk/85">
@@ -47,7 +49,7 @@ export default function About() {
               Inicio
             </a>
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   )

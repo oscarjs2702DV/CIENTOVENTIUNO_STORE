@@ -29,8 +29,10 @@ export const useUI = create((set, get) => ({
   view: initial.view,
   selectedProductId: initial.selectedProductId,
 
-  openProduct: (id) => {
-    set({ view: 'product', selectedProductId: id })
+  // Color con el que se abre el producto (el que se eligió en la tarjeta).
+  initialVariant: 0,
+  openProduct: (id, variant = 0) => {
+    set({ view: 'product', selectedProductId: id, initialVariant: Number.isInteger(variant) ? variant : 0 })
     writeHash('product', id)
     window.scrollTo({ top: 0, behavior: 'instant' })
   },

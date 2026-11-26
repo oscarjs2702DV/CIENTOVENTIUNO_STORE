@@ -5,11 +5,13 @@ import { formatCOP } from '../data/products'
 import { normalizeVariants } from '../lib/variants'
 import { useUI } from '../store/uiStore'
 import Reveal from './Reveal'
+import { isLowStock } from '../lib/stock'
 
 function ProductCard({ product }) {
   const openProduct = useUI((s) => s.openProduct)
   const variants = normalizeVariants(product)
   const agotado = product.stock <= 0
+  const pocas = isLowStock(product)
   const hasColors = variants.length > 1
 
   const [active, setActive] = useState(0)      // color elegido con clic
@@ -83,6 +85,15 @@ function ProductCard({ product }) {
         {agotado && (
           <div className="absolute left-0 top-0 z-10 bg-red-500/90 px-3 py-1.5 font-display text-xs uppercase tracking-widest2 text-white">
             Agotado
+          </div>
+        )}
+        {pocas && (
+          <div className="absolute left-0 top-0 z-10 flex items-center gap-2 bg-grape px-3 py-1.5 font-display text-xs uppercase tracking-widest2 text-white">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
+            </span>
+            {product.stock === 1 ? 'Última unidad' : `Últimas ${product.stock}`}
           </div>
         )}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex translate-y-full items-end justify-center bg-gradient-to-t from-ink/85 to-transparent pb-4 pt-12 transition-transform duration-500 ease-out group-hover:translate-y-0">

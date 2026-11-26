@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   ArrowLeft,
   ShoppingBag,
@@ -7,6 +7,7 @@ import {
   ChevronDown,
   Star,
   ImageOff,
+  Maximize2,
 } from 'lucide-react'
 import { listProducts } from '../lib/api'
 import { formatCOP } from '../data/products'
@@ -14,6 +15,8 @@ import { useCart } from '../store/cartStore'
 import { useUI } from '../store/uiStore'
 import { normalizeVariants } from '../lib/variants'
 import { useToast } from '../store/toastStore'
+import { isLowStock, lowStockText } from '../lib/stock'
+import Lightbox from './Lightbox'
 
 function Stars({ rating, size = 14 }) {
   return (
@@ -58,6 +61,11 @@ export default function ProductDetail() {
   const [added, setAdded] = useState(false)
   const [imgError, setImgError] = useState(false)
   const [showWarning, setShowWarning] = useState(false)
+  const [lightbox, setLightbox] = useState(null)      // foto abierta a pantalla completa
+  const [lens, setLens] = useState(null)              // zoom al pasar el mouse: punto de origen
+  const [shake, setShake] = useState(false)
+  const sizesRef = useRef(null)
+  const swipe = useRef(null)
 
   useEffect(() => {
     setActiveVariant(useUI.getState().initialVariant || 0)
@@ -66,6 +74,7 @@ export default function ProductDetail() {
     setAdded(false)
     setImgError(false)
     setShowWarning(false)
+    setLightbox(null)
     setLoading(true)
 
     let active = true
@@ -104,6 +113,8 @@ export default function ProductDetail() {
   const resolvedActiveImage = activeImage || gallery[0] || product.image
   const selectedColor = currentVariant.colorName
   const agotado = product.stock <= 0
+  const pocas = isLowStock(product)
+  const activeIndex = Math.max(0, gallery.indexOf(resolvedActiveImage))
   const reviews = product.reviews || []
   const hasMultipleVariants = variants.length > 1 || variants[0].colorName !== 'Único'
 
@@ -113,12 +124,43 @@ export default function ProductDetail() {
     setImgError(false)
   }
 
+  const askForSize = () => {
+    setShowWarning(true)
+    setShake(false)
+    requestAnimationFrame(() => setShake(true))
+    sizesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    toast.error('Debes seleccionar una talla antes de agregar a la bolsa')
+    setTimeout(() => setShowWarning(false), 3000)
+  }
+
+  const showImage = (i) => {
+    setActiveImage(gallery[(i + gallery.length) % gallery.length])
+    setImgError(false)
+  }
+
+  const onLens = (e) => {
+    if (e.pointerType !== 'mouse') return
+    const r = e.currentTarget.getBoundingClientRect()
+    setLens(`${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`)
+  }
+
+  const onSwipeStart = (e) => {
+    const t = e.touches[0]
+    swipe.current = { x: t.clientX, y: t.clientY }
+  }
+  const onSwipeEnd = (e) => {
+    const start = swipe.current
+    swipe.current = null
+    if (!start || gallery.length < 2) return
+    const t = e.changedTouches[0]
+    const dx = t.clientX - start.x
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(t.clientY - start.y)) showImage(activeIndex + (dx < 0 ? 1 : -1))
+  }
+
   const handleAdd = () => {
     if (agotado) return
     if (!selectedSize) {
-      setShowWarning(true)
-      toast.error('Debes seleccionar una talla antes de agregar a la bolsa')
-      setTimeout(() => setShowWarning(false), 3000)
+      askForSize()
       return
     }
     add(product, selectedSize, selectedColor, resolvedActiveImage)
@@ -130,9 +172,7 @@ export default function ProductDetail() {
   const handleViewCart = () => {
     if (agotado) return
     if (!selectedSize) {
-      setShowWarning(true)
-      toast.error('Debes seleccionar una talla antes de agregar a la bolsa')
-      setTimeout(() => setShowWarning(false), 3000)
+      askForSize()
       return
     }
     add(product, selectedSize, selectedColor, resolvedActiveImage)
@@ -160,7 +200,35 @@ export default function ProductDetail() {
                   <span className="font-display text-xl uppercase tracking-widest2 text-white/40">CIENTOVEINTIUNO</span>
                 </div>
               ) : (
-                <img src={resolvedActiveImage} alt={product.name} onError={() => setImgError(true)} className="h-full w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setLightbox(activeIndex)}
+                  onPointerMove={onLens}
+                  onPointerLeave={() => setLens(null)}
+                  onTouchStart={onSwipeStart}
+                  onTouchEnd={onSwipeEnd}
+                  aria-label="Ver foto a pantalla completa"
+                  className="group/zoom block h-full w-full cursor-zoom-in"
+                >
+                  <img
+                    key={resolvedActiveImage}
+                    src={resolvedActiveImage}
+                    alt={product.name}
+                    onError={() => setImgError(true)}
+                    className="h-full w-full animate-fadeIn object-cover transition-transform duration-300 ease-out"
+                    style={lens ? { transform: 'scale(1.7)', transformOrigin: lens } : undefined}
+                  />
+                  <span className="pointer-events-none absolute bottom-4 right-4 flex h-10 w-10 items-center justify-center bg-ink/60 text-white ring-1 ring-white/15 backdrop-blur-sm transition-colors group-hover/zoom:bg-grape">
+                    <Maximize2 size={18} />
+                  </span>
+                  {gallery.length > 1 && (
+                    <span className="pointer-events-none absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5 lg:hidden">
+                      {gallery.map((_, i) => (
+                        <span key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i === activeIndex ? 'w-5 bg-white' : 'w-1.5 bg-white/40'}`} />
+                      ))}
+                    </span>
+                  )}
+                </button>
               )}
               {agotado && (
                 <div className="absolute left-4 top-4 z-10 bg-red-500/90 px-4 py-2 font-display text-base uppercase tracking-widest2 text-white">
@@ -191,6 +259,18 @@ export default function ProductDetail() {
               <span className="font-display text-4xl tracking-wide text-white">{formatCOP(product.price)}</span>
               <span className="font-body text-sm text-chalk/50">· Precio con IVA incluido</span>
             </div>
+
+            {pocas && (
+              <div className="flex items-center gap-3 border border-grape/40 bg-grape/10 px-4 py-3">
+                <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-grape opacity-75" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-grape" />
+                </span>
+                <p className="font-display text-base uppercase tracking-widest2 text-white">
+                  {lowStockText(product.stock)}
+                </p>
+              </div>
+            )}
 
             {agotado && (
               <div className="border border-red-500/40 bg-red-500/10 px-4 py-3">
@@ -231,19 +311,32 @@ export default function ProductDetail() {
             )}
 
             {/* Sizes */}
-            <div>
-              <p className="mb-3 font-display text-lg uppercase tracking-widest2 text-chalk">Talla</p>
-              <div className="flex flex-wrap gap-3">
+            <div ref={sizesRef}>
+              <p className="mb-3 font-display text-lg uppercase tracking-widest2 text-chalk">
+                Talla{selectedSize && <>: <span className="text-white">{selectedSize}</span></>}
+              </p>
+              <div
+                onAnimationEnd={() => setShake(false)}
+                className={`flex flex-wrap gap-3 ${shake ? 'animate-shake' : ''}`}
+              >
                 {(product.sizes || []).map((size) => (
                   <button key={size} onClick={() => setSelectedSize(size)} disabled={agotado}
-                    className={`min-w-[3.5rem] px-4 py-3 font-display text-lg uppercase tracking-widest2 transition-all duration-200 ${
+                    aria-pressed={selectedSize === size}
+                    className={`relative min-w-[3.5rem] px-4 py-3 font-display text-lg uppercase tracking-widest2 transition-all duration-200 active:scale-90 ${
                       agotado
                         ? 'cursor-not-allowed bg-white/5 text-white/20 ring-1 ring-white/10'
                         : selectedSize === size
-                        ? 'bg-grape text-white ring-2 ring-grape ring-offset-2 ring-offset-ink'
-                        : 'bg-transparent text-white ring-1 ring-white/20 hover:ring-grape hover:text-grape'
+                        ? 'scale-105 bg-grape text-white shadow-[0_6px_20px_rgba(138,43,226,0.45)] ring-2 ring-grape ring-offset-2 ring-offset-ink'
+                        : showWarning
+                        ? 'bg-transparent text-white ring-1 ring-red-400/70 hover:text-grape hover:ring-grape'
+                        : 'bg-transparent text-white ring-1 ring-white/20 hover:-translate-y-0.5 hover:text-grape hover:ring-grape'
                     }`}>
                     {size}
+                    {selectedSize === size && (
+                      <span className="absolute -right-2 -top-2 flex h-5 w-5 animate-fadeIn items-center justify-center rounded-full bg-white text-grape">
+                        <Check size={13} strokeWidth={3} />
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -251,10 +344,12 @@ export default function ProductDetail() {
 
             {/* Add to bag */}
             <div className="flex flex-col gap-3 sm:flex-row">
-              <button onClick={handleAdd} disabled={agotado || !selectedSize}
+              <button onClick={handleAdd} disabled={agotado}
                 className={`flex flex-1 items-center justify-center gap-2 px-8 py-4 font-display text-xl uppercase tracking-widest2 transition-all duration-300 ${
-                  agotado || !selectedSize
+                  agotado
                     ? 'cursor-not-allowed bg-white/10 text-white/30'
+                    : !selectedSize
+                    ? 'bg-white/10 text-white/50 hover:bg-white/15 hover:text-white/80'
                     : added
                     ? 'bg-emerald-500 text-white'
                     : 'bg-grape text-white hover:scale-[1.02] hover:bg-grapeDark hover:shadow-[0_8px_30px_rgba(138,43,226,0.45)] active:scale-95'
@@ -262,10 +357,12 @@ export default function ProductDetail() {
                 {added ? <Check size={22} /> : <ShoppingBag size={22} />}
                 {agotado ? 'Agotado' : added ? 'Añadido a la bolsa' : 'Agregar a la bolsa'}
               </button>
-              <button onClick={handleViewCart} disabled={agotado || !selectedSize}
+              <button onClick={handleViewCart} disabled={agotado}
                 className={`flex items-center justify-center gap-2 border px-6 py-4 font-display text-xl uppercase tracking-widest2 transition-all duration-300 ${
-                  agotado || !selectedSize
+                  agotado
                     ? 'cursor-not-allowed border-white/10 text-white/30'
+                    : !selectedSize
+                    ? 'border-white/10 text-white/50 hover:border-white/30 hover:text-white/80'
                     : 'border-white/20 text-white hover:border-grape hover:text-grape'
                 }`}>
                 Ver bolsa
@@ -359,6 +456,16 @@ export default function ProductDetail() {
             </div>
           </div>
         </div>
+      )}
+
+      {lightbox !== null && gallery.length > 0 && (
+        <Lightbox
+          images={gallery}
+          index={Math.min(lightbox, gallery.length - 1)}
+          alt={`${product.name} ${selectedColor}`}
+          onIndex={(i) => { setLightbox(i); showImage(i) }}
+          onClose={() => setLightbox(null)}
+        />
       )}
     </div>
   )

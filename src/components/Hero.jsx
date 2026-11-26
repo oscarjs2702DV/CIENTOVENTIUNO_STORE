@@ -15,8 +15,10 @@ export default function Hero() {
       <div className="absolute inset-0 bg-gradient-to-b from-ink/80 via-ink/60 to-ink" />
       <div className="absolute inset-0 bg-ink/40" />
 
-      <div className="absolute left-1/2 top-1/2 z-10 flex w-full max-w-4xl -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center px-4 text-center">
-          <h1 className="opacity-0 font-display text-6xl uppercase leading-none tracking-widest3 text-white animate-riseUp sm:text-8xl md:text-9xl [animation-delay:0.2s]">
+      <div className="absolute left-1/2 top-1/2 z-10 flex w-full max-w-6xl -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center px-4 text-center">
+          {/* El tamaño crece con el ancho de pantalla para que la palabra nunca se salga.
+              El margen negativo compensa el espacio que deja la última letra. */}
+          <h1 className="mr-[-0.25em] whitespace-nowrap opacity-0 font-display text-[clamp(1.75rem,9.8vw,7.75rem)] uppercase leading-none tracking-widest3 text-white animate-riseUp [animation-delay:0.2s]">
             CIENTOVEINTIUNO
           </h1>
 

@@ -258,7 +258,7 @@ export async function handleCustomers(request, env, url, readJson, json, ctx) {
 
   if (path === '/sesion' && method === 'GET') {
     const c = await currentCustomer(request, env)
-    return json({ user: c ? publicCustomer(c) : null, google: googleReady(env) })
+    return json({ user: c ? publicCustomer(c) : null, google: googleReady(env), _dbg: { id: typeof env.GOOGLE_CLIENT_ID, idLen: (env.GOOGLE_CLIENT_ID || '').length, secret: typeof env.GOOGLE_CLIENT_SECRET, secretLen: (env.GOOGLE_CLIENT_SECRET || '').length, admin: typeof env.ADMIN_KEY, wompi: typeof env.WOMPI_INTEGRITY_SECRET } })
   }
 
   if (path === '/registro' && method === 'POST') {

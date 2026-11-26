@@ -105,6 +105,9 @@ const publicOrder = (o) => ({
 })
 
 // Cambia el estado una sola vez; si queda aprobado, descuenta el inventario.
+// En modo pruebas (llave pub_test_) no se toca el inventario real.
+const isTest = (env) => !(env.WOMPI_PUBLIC_KEY || '').startsWith('pub_prod_')
+
 async function settle(env, order, tx) {
   if (tx.reference !== order.reference) return order
   if (tx.amount_in_cents !== order.total * 100 || tx.currency !== 'COP') {
@@ -118,7 +121,7 @@ async function settle(env, order, tx) {
   const r = await env.DB.prepare(
     `UPDATE orders SET status=?, transaction_id=?, payment_method=?, updated_at=? WHERE reference=? AND status=?`
   ).bind(status, tx.id, tx.payment_method_type || null, now, order.reference, order.status).run()
-  if (r.meta.changes && status === 'APPROVED') {
+  if (r.meta.changes && status === 'APPROVED' && !JSON.parse(order.buyer).test) {
     const qty = {}
     for (const i of JSON.parse(order.items)) qty[i.id] = (qty[i.id] || 0) + i.qty
     await env.DB.batch(Object.entries(qty).map(([id, n]) =>
@@ -139,6 +142,7 @@ async function create(request, env, url, body) {
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0)
   const { shipping, onDelivery } = shippingFor(items, buyer)
   buyer.shippingOnDelivery = onDelivery
+  if (isTest(env)) buyer.test = true
   const total = subtotal + shipping
   const reference = `C121-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
   const now = new Date().toISOString()

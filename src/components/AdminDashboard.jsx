@@ -235,6 +235,7 @@ function OrdersSection() {
               <li key={o.reference} className="py-4">
                 <button onClick={() => setOpen(open === o.reference ? null : o.reference)} className="flex w-full flex-wrap items-center gap-x-6 gap-y-2 text-left">
                   <span className={`border px-3 py-1 font-display text-xs uppercase tracking-widest2 ${cls}`}>{label}</span>
+                  {b.test && <span className="border border-sky-500/40 bg-sky-500/10 px-3 py-1 font-display text-xs uppercase tracking-widest2 text-sky-300">Prueba</span>}
                   <span className="font-body text-sm text-chalk/60">{new Date(o.createdAt).toLocaleString('es-CO')}</span>
                   <span className="font-display text-base uppercase tracking-wide text-white">{b.name}</span>
                   <span className="font-body text-sm text-chalk/60">{b.city}</span>

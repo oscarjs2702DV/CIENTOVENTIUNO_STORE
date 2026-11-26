@@ -33,6 +33,7 @@ export const useCustomer = create((set, get) => ({
   user: null,
   loading: true,
   googleAvailable: false,
+  paymentsAvailable: false,
   googleError: back.googleError,
   started: false,
   menuOpen: false,
@@ -42,8 +43,8 @@ export const useCustomer = create((set, get) => ({
     if (get().started) return
     set({ started: true })
     try {
-      const { user, google } = await getCustomer()
-      set({ user, googleAvailable: google, loading: false })
+      const { user, google, payments } = await getCustomer()
+      set({ user, googleAvailable: google, paymentsAvailable: Boolean(payments), loading: false })
       if (user && back.welcome === 'nuevo') useToast.getState().success('Te has registrado correctamente')
       else if (user && back.welcome) useToast.getState().success(`Hola de nuevo${firstName(user) ? `, ${firstName(user)}` : ''}`)
     } catch {

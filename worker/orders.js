@@ -108,6 +108,11 @@ const publicOrder = (o) => ({
 // En modo pruebas (llave pub_test_) no se toca el inventario real.
 const isTest = (env) => !(env.WOMPI_PUBLIC_KEY || '').startsWith('pub_prod_')
 
+// Con llave de pruebas el pago solo se abre en las vistas previas de ramas
+// (rama-cientoventiuno-store.*.workers.dev); la tienda real espera la llave pub_prod_.
+const previewHost = (url) => url.hostname.endsWith('.workers.dev') && url.hostname.split('.')[0].endsWith('-cientoventiuno-store')
+export const paymentsOpen = (env, url) => Boolean(env.WOMPI_PUBLIC_KEY) && (!isTest(env) || previewHost(url))
+
 async function settle(env, order, tx) {
   if (tx.reference !== order.reference) return order
   if (tx.amount_in_cents !== order.total * 100 || tx.currency !== 'COP') {
@@ -133,6 +138,7 @@ async function settle(env, order, tx) {
 async function create(request, env, url, body, customer) {
   const missing = ['WOMPI_PUBLIC_KEY', 'WOMPI_INTEGRITY_SECRET'].filter((k) => !env[k])
   if (missing.length) throw new OrderError(`Los pagos todavía no están configurados (falta ${missing.join(', ')})`, 503)
+  if (!paymentsOpen(env, url)) throw new OrderError('Los pagos en línea abren muy pronto', 503)
   if (env.CUSTOMER_LIMIT) {
     const { success } = await env.CUSTOMER_LIMIT.limit({ key: 'pedido:' + (request.headers.get('CF-Connecting-IP') || '') })
     if (!success) throw new OrderError('Demasiados intentos. Espera un minuto.', 429)

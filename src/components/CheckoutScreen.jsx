@@ -37,6 +37,7 @@ export default function CheckoutScreen() {
   const backToStore = useUI((s) => s.backToStore)
   const user = useCustomer((s) => s.user)
   const userLoading = useCustomer((s) => s.loading)
+  const paymentsAvailable = useCustomer((s) => s.paymentsAvailable)
   const goLogin = useUI((s) => s.goLogin)
   const [form, setForm] = useState(() => {
     const { email, ...draft } = readDraft() // el correo no se recuerda: siempre es el de la cuenta
@@ -196,11 +197,13 @@ export default function CheckoutScreen() {
 
               {error && <p role="alert" className="mt-4 border border-red-500/40 bg-red-500/10 px-3 py-2 font-body text-sm text-red-300">{error}</p>}
 
-              <button type="submit" disabled={sending} className="btn-primary mt-6 w-full disabled:opacity-60 disabled:hover:scale-100">
-                <Lock size={18} /> {sending ? 'Abriendo el pago...' : 'Pagar con Wompi'}
+              <button type="submit" disabled={sending || !paymentsAvailable} className="btn-primary mt-6 w-full disabled:opacity-60 disabled:hover:scale-100">
+                <Lock size={18} /> {!paymentsAvailable ? 'Pagos en línea muy pronto' : sending ? 'Abriendo el pago...' : 'Pagar con Wompi'}
               </button>
               <p className="mt-3 text-center font-body text-xs text-chalk/50">
-                Te llevaremos a Wompi (Bancolombia) para pagar con tarjeta, PSE, Nequi o Bancolombia.
+                {paymentsAvailable
+                  ? 'Te llevaremos a Wompi (Bancolombia) para pagar con tarjeta, PSE, Nequi o Bancolombia.'
+                  : 'Estamos activando el pago en línea. Mientras tanto, haz tu pedido escribiéndonos por Instagram.'}
               </p>
             </div>
           </aside>

@@ -1,4 +1,5 @@
 import { sendWelcome, sendCode, mailReady } from './welcome.js'
+import { paymentsOpen } from './orders.js'
 
 // Cuentas de clientes: correo y contraseña, o Google.
 // La sesión es un token aleatorio en la cookie __Host-cliente; en la base solo
@@ -295,7 +296,7 @@ export async function handleCustomers(request, env, url, readJson, json, ctx) {
 
   if (path === '/sesion' && method === 'GET') {
     const c = await currentCustomer(request, env)
-    return json({ user: c ? publicCustomer(c) : null, google: googleReady(env) })
+    return json({ user: c ? publicCustomer(c) : null, google: googleReady(env), payments: paymentsOpen(env, url) })
   }
 
   if (path === '/registro' && method === 'POST') {

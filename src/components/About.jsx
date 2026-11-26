@@ -1,7 +1,7 @@
 import Reveal from './Reveal'
 
-const aboutImg =
-  'https://images.pexels.com/photos/35005242/pexels-photo-35005242.jpeg?auto=compress&cs=tinysrgb&w=900'
+// Primera publicación de @ciento21.clothing
+const aboutImg = '/assets/quienes-somos.webp'
 
 export default function About() {
   return (
@@ -14,7 +14,7 @@ export default function About() {
           <div className="overflow-hidden ring-1 ring-white/15">
             <img
               src={aboutImg}
-              alt="Retrato urbano CIENTOVEINTIUNO"
+              alt="Buzo negro CIENTOVEINTIUNO, cuello redondo en algodón"
               loading="lazy"
               className="aspect-[4/5] w-full object-cover transition-transform duration-700 hover:scale-105"
             />

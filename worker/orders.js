@@ -128,7 +128,8 @@ async function settle(env, order, tx) {
 }
 
 async function create(request, env, url, body) {
-  if (!env.WOMPI_PUBLIC_KEY || !env.WOMPI_INTEGRITY_SECRET) throw new OrderError('Los pagos todavía no están configurados', 503)
+  const missing = ['WOMPI_PUBLIC_KEY', 'WOMPI_INTEGRITY_SECRET'].filter((k) => !env[k])
+  if (missing.length) throw new OrderError(`Los pagos todavía no están configurados (falta ${missing.join(', ')})`, 503)
   if (env.CUSTOMER_LIMIT) {
     const { success } = await env.CUSTOMER_LIMIT.limit({ key: 'pedido:' + (request.headers.get('CF-Connecting-IP') || '') })
     if (!success) throw new OrderError('Demasiados intentos. Espera un minuto.', 429)

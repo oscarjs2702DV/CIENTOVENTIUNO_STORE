@@ -5,7 +5,8 @@ export const CONTACT = {
   email: 'c121clothes@gmail.com',
   // Número en formato internacional sin espacios ni "+", p. ej. '573001234567'.
   // Vacío = no se muestra el WhatsApp.
-  whatsapp: '',
+  whatsapp: '573026925030',
+  whatsappLabel: '+57 302 692 5030',
   instagram: 'https://www.instagram.com/ciento21.clothing/',
   instagramUser: '@ciento21.clothing',
   place: 'Fontibón, La Cabaña · Bogotá, Colombia',
@@ -132,7 +133,7 @@ export const PAGES = {
         body: [
           {
             list: [
-              `Escríbenos a ${CONTACT.email} o por Instagram con tu nombre, el número de pedido y fotos donde se vea el defecto.`,
+              `Escríbenos a ${CONTACT.email}, al WhatsApp ${CONTACT.whatsappLabel} o por Instagram con tu nombre, el número de pedido y fotos donde se vea el defecto.`,
               'Te respondemos en máximo 3 días hábiles y, si aplica, te enviamos la guía para recoger la prenda sin costo.',
               'Revisamos la prenda cuando llega y, según lo que prefieras, te enviamos una nueva igual (o de otro color si no queda), o te devolvemos el dinero.',
             ],
@@ -214,7 +215,7 @@ export const PAGES = {
       {
         h: '1. Quiénes somos',
         body: [
-          `${BRAND} es una marca de ropa urbana con sede en ${CONTACT.place}. Puedes escribirnos a ${CONTACT.email} o por Instagram en ${CONTACT.instagramUser}.`,
+          `${BRAND} es una marca de ropa urbana con sede en ${CONTACT.place}. Puedes escribirnos a ${CONTACT.email}, al WhatsApp ${CONTACT.whatsappLabel} o por Instagram en ${CONTACT.instagramUser}.`,
         ],
       },
       {
@@ -438,6 +439,7 @@ export const PAGES = {
               `Marca: ${BRAND}`,
               `Ubicación: ${CONTACT.place}`,
               `Correo: ${CONTACT.email}`,
+              `WhatsApp: ${CONTACT.whatsappLabel}`,
               `Instagram: ${CONTACT.instagramUser}`,
             ],
           },

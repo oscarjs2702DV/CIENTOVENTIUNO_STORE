@@ -11,7 +11,7 @@ const cols = [
 const contact = [
   { icon: MapPin, label: CONTACT.place, href: 'https://www.google.com/maps/search/?api=1&query=La+Caba%C3%B1a%2C+Fontib%C3%B3n%2C+Bogot%C3%A1' },
   { icon: Mail, label: CONTACT.email, href: `mailto:${CONTACT.email}` },
-  CONTACT.whatsapp && { icon: MessageCircle, label: 'WhatsApp', href: `https://wa.me/${CONTACT.whatsapp}` },
+  CONTACT.whatsapp && { icon: MessageCircle, label: CONTACT.whatsappLabel, href: `https://wa.me/${CONTACT.whatsapp}` },
 ].filter(Boolean)
 
 export default function Footer() {

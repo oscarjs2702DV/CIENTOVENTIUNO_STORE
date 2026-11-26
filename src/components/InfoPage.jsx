@@ -110,7 +110,10 @@ export default function InfoPage() {
             <p className="font-display text-xl uppercase tracking-widest2 text-white">¿Te quedó alguna duda?</p>
             <p className="mt-2 font-body text-sm text-chalk/70">
               Escríbenos a{' '}
-              <a href={`mailto:${CONTACT.email}`} className="text-grape hover:underline">{CONTACT.email}</a>{' '}
+              <a href={`mailto:${CONTACT.email}`} className="text-grape hover:underline">{CONTACT.email}</a>, al WhatsApp{' '}
+              <a href={`https://wa.me/${CONTACT.whatsapp}`} target="_blank" rel="noopener noreferrer" className="text-grape hover:underline">
+                {CONTACT.whatsappLabel}
+              </a>{' '}
               o por Instagram en{' '}
               <a href={CONTACT.instagram} target="_blank" rel="noopener noreferrer" className="text-grape hover:underline">
                 {CONTACT.instagramUser}

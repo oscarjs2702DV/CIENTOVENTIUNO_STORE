@@ -12,15 +12,14 @@ const contact = [
   { icon: MapPin, label: CONTACT.place, href: 'https://www.google.com/maps/search/?api=1&query=La+Caba%C3%B1a%2C+Fontib%C3%B3n%2C+Bogot%C3%A1' },
   { icon: Mail, label: CONTACT.email, href: `mailto:${CONTACT.email}` },
   CONTACT.whatsapp && { icon: MessageCircle, label: 'WhatsApp', href: `https://wa.me/${CONTACT.whatsapp}` },
-  { icon: Instagram, label: CONTACT.instagramUser, href: CONTACT.instagram },
 ].filter(Boolean)
 
 export default function Footer() {
   return (
     <footer className="border-t border-white/10 bg-ink px-5 py-16 sm:px-8">
       <div className="mx-auto max-w-7xl">
-        <div className="grid gap-12 md:grid-cols-4">
-          <div className="md:col-span-1">
+        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="sm:col-span-2">
             <span className="font-display text-3xl uppercase tracking-widest3 text-white">
               CientoVeintiuno
             </span>
@@ -55,7 +54,7 @@ export default function Footer() {
                   <a
                     href={href}
                     {...(href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                    className={`flex items-start gap-2 break-all ${linkCls}`}
+                    className={`flex items-start gap-2 break-words ${linkCls}`}
                   >
                     <Icon size={16} className="mt-0.5 flex-shrink-0 text-grape" />
                     {label}

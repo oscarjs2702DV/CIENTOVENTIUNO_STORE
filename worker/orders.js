@@ -137,7 +137,8 @@ async function create(request, env, url, body, customer) {
     const { success } = await env.CUSTOMER_LIMIT.limit({ key: 'pedido:' + (request.headers.get('CF-Connecting-IP') || '') })
     if (!success) throw new OrderError('Demasiados intentos. Espera un minuto.', 429)
   }
-  const buyer = parseBuyer(body?.buyer)
+  // El correo del pedido siempre es el de la cuenta: ahí llegan el comprobante y los avisos.
+  const buyer = parseBuyer({ ...body?.buyer, email: customer.email })
   const items = await buildItems(env, body?.items)
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0)
   const { shipping, onDelivery } = shippingFor(items, buyer)

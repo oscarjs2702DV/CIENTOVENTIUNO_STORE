@@ -38,17 +38,20 @@ export default function CheckoutScreen() {
   const user = useCustomer((s) => s.user)
   const userLoading = useCustomer((s) => s.loading)
   const goLogin = useUI((s) => s.goLogin)
-  const [form, setForm] = useState(() => ({
-    name: '', email: '', phone: '', docType: 'CC', doc: '',
-    department: 'Bogotá D.C.', city: 'Bogotá', address: '', notes: '', ...readDraft(),
-  }))
+  const [form, setForm] = useState(() => {
+    const { email, ...draft } = readDraft() // el correo no se recuerda: siempre es el de la cuenta
+    return {
+      name: '', phone: '', docType: 'CC', doc: '',
+      department: 'Bogotá D.C.', city: 'Bogotá', address: '', notes: '', ...draft,
+    }
+  })
   const [accept, setAccept] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState(null)
 
   useEffect(() => { document.title = 'Pagar · CIENTOVEINTIUNO'; return () => { document.title = 'CIENTOVEINTIUNO' } }, [])
   useEffect(() => {
-    if (user) setForm((f) => ({ ...f, name: f.name || user.name || '', email: f.email || user.email || '' }))
+    if (user) setForm((f) => ({ ...f, name: f.name || user.name || '' }))
   }, [user])
 
   const freeShipping = items.some((i) => i.price > FREE_SHIPPING_FROM)
@@ -65,7 +68,7 @@ export default function CheckoutScreen() {
     try { const { notes, ...keep } = form; localStorage.setItem(DRAFT, JSON.stringify(keep)) } catch { /* sin almacenamiento */ }
     try {
       const { checkoutUrl } = await createOrder({
-        buyer: form,
+        buyer: { ...form, email: user.email },
         items: items.map((i) => ({ id: i.id, size: i.selectedSize, color: i.selectedColor, qty: i.qty })),
       })
       window.location.assign(checkoutUrl)
@@ -114,7 +117,10 @@ export default function CheckoutScreen() {
               <legend className="font-display text-2xl uppercase tracking-widest2 text-white">Tus datos</legend>
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
                 <Input label="Nombre completo" id="co-nombre" full required maxLength={120} autoComplete="name" value={form.name} onChange={set('name')} />
-                <Input label="Correo" id="co-correo" type="email" required maxLength={160} autoComplete="email" value={form.email} onChange={set('email')} />
+                <div>
+                  <span className="mb-1.5 block font-body text-sm text-chalk/70">Correo (el de tu cuenta)</span>
+                  <p className="truncate border border-white/5 px-3 py-2.5 font-body text-chalk/60">{user.email}</p>
+                </div>
                 <Input label="Celular" id="co-celular" type="tel" required pattern="[0-9 +()\-]{7,20}" autoComplete="tel" value={form.phone} onChange={set('phone')} />
                 <div>
                   <label htmlFor="co-tipo" className="mb-1.5 block font-body text-sm text-chalk/70">Tipo de documento</label>

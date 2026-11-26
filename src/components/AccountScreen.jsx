@@ -17,8 +17,56 @@ function GoogleLogo() {
   )
 }
 
+function VerifyCode({ email, onBack }) {
+  const { verifyCode, resendCode } = useCustomer()
+  const [code, setCode] = useState('')
+  const [error, setError] = useState(null)
+  const [notice, setNotice] = useState(null)
+  const [sending, setSending] = useState(false)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setError(null)
+    setNotice(null)
+    setSending(true)
+    try { await verifyCode({ email, code }) } catch (err) { setError(err.message); setSending(false) }
+  }
+  const resend = async () => {
+    setError(null)
+    setNotice(null)
+    try { await resendCode(email); setNotice('Te enviamos un código nuevo.') } catch (err) { setError(err.message) }
+  }
+
+  return (
+    <div className="w-full max-w-sm text-center">
+      <Mail size={40} className="mx-auto text-grape" />
+      <h1 className="mt-4 font-display text-4xl uppercase tracking-widest2 text-white">Revisa tu correo</h1>
+      <p className="mt-4 font-body text-sm leading-relaxed text-chalk/70">
+        Enviamos un código de 6 dígitos a <span className="text-white">{email}</span>. Escríbelo para terminar de crear tu cuenta.
+        Si no lo ves, revisa la carpeta de spam.
+      </p>
+      <form onSubmit={submit} className="mt-8 flex flex-col gap-4">
+        <label htmlFor="codigo" className="sr-only">Código</label>
+        <input id="codigo" inputMode="numeric" autoComplete="one-time-code" required pattern="[0-9]{6}" maxLength={6} autoFocus
+          value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+          className={`${field} text-center font-display text-3xl tracking-[0.5em]`} />
+        {error && <p role="alert" className="font-body text-sm text-red-300">{error}</p>}
+        {notice && <p role="status" className="font-body text-sm text-emerald-400">{notice}</p>}
+        <button type="submit" disabled={sending || code.length !== 6} className="btn-primary w-full disabled:opacity-50">
+          {sending ? 'Un momento...' : 'Confirmar'}
+        </button>
+      </form>
+      <div className="mt-6 flex justify-center gap-6 font-body text-sm">
+        <button onClick={resend} className="text-grape hover:underline">Reenviar código</button>
+        <button onClick={onBack} className="text-chalk/60 hover:text-white">Cambiar correo</button>
+      </div>
+    </div>
+  )
+}
+
 function SignedOut() {
   const { register, signIn, googleAvailable, googleError, clearGoogleError } = useCustomer()
+  const [pendingEmail, setPendingEmail] = useState(null)
   const [mode, setMode] = useState('ingresar')
   const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [error, setError] = useState(null)
@@ -35,13 +83,17 @@ function SignedOut() {
     clearGoogleError()
     setSending(true)
     try {
-      if (isRegister) await register(form)
-      else await signIn({ email: form.email, password: form.password })
+      if (isRegister) {
+        const res = await register(form)
+        if (res?.verify) { setPendingEmail(res.email); setSending(false) }
+      } else await signIn({ email: form.email, password: form.password })
     } catch (err) {
       setError(err.message)
       setSending(false)
     }
   }
+
+  if (pendingEmail) return <VerifyCode email={pendingEmail} onBack={() => setPendingEmail(null)} />
 
   return (
     <div className="w-full max-w-sm">

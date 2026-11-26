@@ -1,4 +1,4 @@
-import { sendWelcome } from './welcome.js'
+import { sendWelcome, sendCode, mailReady } from './welcome.js'
 
 // Cuentas de clientes: correo y contraseña, o Google.
 // La sesión es un token aleatorio en la cookie __Host-cliente; en la base solo
@@ -43,6 +43,15 @@ function ensureSchema(env) {
       customer_id TEXT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
       expires_at INTEGER NOT NULL)`),
     env.DB.prepare('CREATE INDEX IF NOT EXISTS customer_sessions_customer ON customer_sessions(customer_id)'),
+    // Registros esperando el código que se mandó al correo.
+    env.DB.prepare(`CREATE TABLE IF NOT EXISTS pending_signups (
+      email TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
+      code_hash TEXT NOT NULL,
+      attempts INTEGER NOT NULL DEFAULT 0,
+      sent_at INTEGER NOT NULL,
+      expires_at INTEGER NOT NULL)`),
   ]).then(async () => {
     // Columnas añadidas después: si ya existen, D1 avisa y se ignora.
     for (const col of ['avatar TEXT', 'birth_date TEXT']) {
@@ -134,6 +143,34 @@ export async function currentCustomer(request, env) {
     `SELECT c.* FROM customer_sessions s JOIN customers c ON c.id = s.customer_id
      WHERE s.token_hash = ? AND s.expires_at > ?`
   ).bind(await sha256(token), Date.now()).first()
+}
+
+const CODE_MINUTES = 10
+const CODE_ATTEMPTS = 5
+const RESEND_WAIT = 60_000
+const newCode = () => String(crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000).padStart(6, '0')
+const codeHash = (mail, code) => sha256(`${mail}:${code}`)
+
+// Crea o renueva el registro pendiente y manda el código al correo.
+async function sendSignupCode(env, mail, fields) {
+  const prev = await env.DB.prepare('SELECT sent_at FROM pending_signups WHERE email = ?').bind(mail).first()
+  if (prev && Date.now() - prev.sent_at < RESEND_WAIT) throw new CustomerError('Espera un minuto para pedir otro código.', 429)
+  const code = newCode()
+  const now = Date.now()
+  const hash = await codeHash(mail, code)
+  if (fields) {
+    await env.DB.prepare(
+      `INSERT INTO pending_signups (email,name,password_hash,code_hash,attempts,sent_at,expires_at) VALUES (?,?,?,?,0,?,?)
+       ON CONFLICT(email) DO UPDATE SET name=excluded.name, password_hash=excluded.password_hash,
+       code_hash=excluded.code_hash, attempts=0, sent_at=excluded.sent_at, expires_at=excluded.expires_at`
+    ).bind(mail, fields.name, fields.hash, hash, now, now + CODE_MINUTES * 60_000).run()
+  } else {
+    await env.DB.prepare('UPDATE pending_signups SET code_hash=?, attempts=0, sent_at=?, expires_at=? WHERE email=?')
+      .bind(hash, now, now + CODE_MINUTES * 60_000, mail).run()
+  }
+  try { await sendCode(env, { email: mail, code }) } catch {
+    throw new CustomerError('No pudimos enviar el código a tu correo. Inténtalo de nuevo en un momento.', 502)
+  }
 }
 
 const googleReady = (env) => Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET)
@@ -268,6 +305,13 @@ export async function handleCustomers(request, env, url, readJson, json, ctx) {
     if (!name) throw new CustomerError('Escribe tu nombre')
     const mail = email(b?.email)
     const hash = await hashPassword(password(b?.password))
+    if (mailReady(env)) {
+      // La cuenta se crea solo cuando el cliente confirma el código que le llegó.
+      const taken = await env.DB.prepare('SELECT 1 FROM customers WHERE email = ?').bind(mail).first()
+      if (taken) throw new CustomerError('Ya existe una cuenta con ese correo. Ingresa o usa Google.', 409)
+      await sendSignupCode(env, mail, { name, hash })
+      return json({ verify: true, email: mail })
+    }
     const id = crypto.randomUUID()
     const r = await env.DB.prepare(
       'INSERT INTO customers (id,email,name,password_hash,created_at) VALUES (?,?,?,?,?) ON CONFLICT(email) DO NOTHING'
@@ -275,6 +319,40 @@ export async function handleCustomers(request, env, url, readJson, json, ctx) {
     if (!r.meta.changes) throw new CustomerError('Ya existe una cuenta con ese correo. Ingresa o usa Google.', 409)
     sendWelcome(env, ctx, { name, email: mail, origin: url.origin })
     return withCookie({ user: publicCustomer({ name, email: mail }) }, await startSession(env, id))
+  }
+
+  if (path === '/registro/reenviar' && method === 'POST') {
+    await limited(request, env)
+    const mail = email((await readJson(request))?.email)
+    const p = await env.DB.prepare('SELECT 1 FROM pending_signups WHERE email = ?').bind(mail).first()
+    if (!p) throw new CustomerError('Vuelve a llenar el registro para pedir un código.', 404)
+    await sendSignupCode(env, mail)
+    return json({ ok: true })
+  }
+
+  if (path === '/registro/verificar' && method === 'POST') {
+    await limited(request, env)
+    const b = await readJson(request)
+    const mail = email(b?.email)
+    const code = typeof b?.code === 'string' ? b.code.replace(/\D/g, '') : ''
+    const p = await env.DB.prepare('SELECT * FROM pending_signups WHERE email = ?').bind(mail).first()
+    if (!p) throw new CustomerError('Vuelve a llenar el registro para pedir un código.', 404)
+    const drop = () => env.DB.prepare('DELETE FROM pending_signups WHERE email = ?').bind(mail).run()
+    if (p.expires_at < Date.now()) throw new CustomerError('El código venció. Pide uno nuevo.', 410)
+    if (p.attempts >= CODE_ATTEMPTS) throw new CustomerError('Demasiados intentos. Pide un código nuevo.', 429)
+    if (code.length !== 6 || !sameBytes(enc.encode(await codeHash(mail, code)), enc.encode(p.code_hash))) {
+      await env.DB.prepare('UPDATE pending_signups SET attempts = attempts + 1 WHERE email = ?').bind(mail).run()
+      const left = CODE_ATTEMPTS - p.attempts - 1
+      throw new CustomerError(left > 0 ? `Código incorrecto. Te quedan ${left} intentos.` : 'Demasiados intentos. Pide un código nuevo.', 403)
+    }
+    const id = crypto.randomUUID()
+    const r = await env.DB.prepare(
+      'INSERT INTO customers (id,email,name,password_hash,created_at) VALUES (?,?,?,?,?) ON CONFLICT(email) DO NOTHING'
+    ).bind(id, mail, p.name, p.password_hash, new Date().toISOString()).run()
+    await drop()
+    if (!r.meta.changes) throw new CustomerError('Ya existe una cuenta con ese correo. Ingresa o usa Google.', 409)
+    sendWelcome(env, ctx, { name: p.name, email: mail, origin: url.origin })
+    return withCookie({ user: publicCustomer({ name: p.name, email: mail }) }, await startSession(env, id))
   }
 
   if (path === '/ingresar' && method === 'POST') {

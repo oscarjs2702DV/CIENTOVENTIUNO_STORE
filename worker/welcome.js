@@ -56,3 +56,33 @@ export function sendWelcome(env, ctx, { name, email, origin }) {
   if (ctx?.waitUntil) ctx.waitUntil(job)
   return job
 }
+
+// ---------- Código para confirmar el correo al crear cuenta ----------
+// Se activa solo cuando hay servicio de correo configurado.
+export const mailReady = (env) => Boolean(env.RESEND_API_KEY && env.MAIL_FROM)
+
+export async function sendCode(env, { email, code }) {
+  const r = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: env.MAIL_FROM,
+      to: [email],
+      subject: `${code} es tu código de CIENTOVENTIUNO`,
+      html: `<!doctype html><html lang="es"><body style="margin:0;padding:32px 16px;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#121212;border:1px solid #2a2a2a;">
+<tr><td align="center" style="padding:32px 28px;">
+<p style="margin:0;color:#8A2BE2;font-size:13px;letter-spacing:3px;text-transform:uppercase;">Confirma tu correo</p>
+<p style="margin:16px 0 0;color:#bdbdbd;font-size:15px;line-height:1.6;">Escribe este código en CIENTOVENTIUNO para terminar de crear tu cuenta:</p>
+<p style="margin:20px 0 0;color:#ffffff;font-size:36px;font-weight:bold;letter-spacing:10px;">${code}</p>
+<p style="margin:20px 0 0;color:#888888;font-size:13px;line-height:1.6;">Vence en 10 minutos. Si no fuiste tú, ignora este correo.</p>
+</td></tr></table></td></tr></table></body></html>`,
+      text: `Tu código de CIENTOVENTIUNO es ${code}. Vence en 10 minutos. Si no fuiste tú, ignora este correo.`,
+    }),
+  })
+  if (!r.ok) {
+    console.error('Correo con código falló', r.status, await r.text())
+    throw new Error('envío')
+  }
+}

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import {
-  getCustomer, loginCustomer, logoutCustomer, registerCustomer,
+  getCustomer, loginCustomer, logoutCustomer, registerCustomer, verifySignup, resendSignupCode,
   removeAvatar, updateProfile, uploadAvatar,
 } from '../lib/api'
 import { useToast } from './toastStore'
@@ -51,11 +51,21 @@ export const useCustomer = create((set, get) => ({
     }
   },
 
+  // Si el servidor pide confirmar el correo, devuelve { verify, email } y la
+  // cuenta se crea después, con verifyCode.
   register: async (data) => {
-    const { user } = await registerCustomer(data)
+    const res = await registerCustomer(data)
+    if (res.verify) return res
+    set({ user: res.user })
+    useToast.getState().success('Te has registrado correctamente')
+    return res
+  },
+  verifyCode: async (data) => {
+    const { user } = await verifySignup(data)
     set({ user })
     useToast.getState().success('Te has registrado correctamente')
   },
+  resendCode: (email) => resendSignupCode(email),
   signIn: async (data) => {
     const { user } = await loginCustomer(data)
     set({ user })

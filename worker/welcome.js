@@ -61,6 +61,9 @@ export function sendWelcome(env, ctx, { name, email, origin }) {
 // Se activa solo cuando hay servicio de correo configurado.
 export const mailReady = (env) => Boolean(env.RESEND_API_KEY && env.MAIL_FROM)
 
+// Los correos necesitan una dirección pública fija para el logo: la de la tienda publicada.
+const MAIL_LOGO = 'https://cientoventiuno-store.cientoventiuno-store.workers.dev/assets/logo-correo.png'
+
 export async function sendCode(env, { email, code }) {
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -68,17 +71,21 @@ export async function sendCode(env, { email, code }) {
     body: JSON.stringify({
       from: env.MAIL_FROM,
       to: [email],
-      subject: `${code} es tu código de CIENTOVENTIUNO`,
-      html: `<!doctype html><html lang="es"><body style="margin:0;padding:32px 16px;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
+      subject: 'CÓDIGO DE REGISTRO DE CIENTOVENTIUNO',
+      html: `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="color-scheme" content="dark"></head>
+<body style="margin:0;padding:32px 16px;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#121212;border:1px solid #2a2a2a;">
-<tr><td align="center" style="padding:32px 28px;">
-<p style="margin:0;color:#8A2BE2;font-size:13px;letter-spacing:3px;text-transform:uppercase;">Confirma tu correo</p>
-<p style="margin:16px 0 0;color:#bdbdbd;font-size:15px;line-height:1.6;">Escribe este código en CIENTOVENTIUNO para terminar de crear tu cuenta:</p>
-<p style="margin:20px 0 0;color:#ffffff;font-size:36px;font-weight:bold;letter-spacing:10px;">${code}</p>
-<p style="margin:20px 0 0;color:#888888;font-size:13px;line-height:1.6;">Vence en 10 minutos. Si no fuiste tú, ignora este correo.</p>
+<tr><td align="center" style="padding:32px 28px 0;">
+<img src="${MAIL_LOGO}" width="160" height="80" alt="CIENTOVENTIUNO" style="display:block;border:0;">
+</td></tr>
+<tr><td align="center" style="padding:24px 28px 32px;">
+<p style="margin:0;color:#8A2BE2;font-size:14px;font-weight:bold;letter-spacing:3px;text-transform:uppercase;">Código de registro</p>
+<p style="margin:16px 0 0;color:#d6d6d6;font-size:15px;font-weight:600;line-height:1.6;">Escribe este código en CIENTOVENTIUNO para terminar de crear tu cuenta:</p>
+<p style="margin:20px 0 0;color:#ffffff;font-size:38px;font-weight:900;letter-spacing:10px;">${code}</p>
+<p style="margin:20px 0 0;color:#9a9a9a;font-size:13px;font-weight:600;line-height:1.6;">Vence en 10 minutos. Si no fuiste tú, ignora este correo.</p>
 </td></tr></table></td></tr></table></body></html>`,
-      text: `Tu código de CIENTOVENTIUNO es ${code}. Vence en 10 minutos. Si no fuiste tú, ignora este correo.`,
+      text: `Tu código de registro de CIENTOVENTIUNO es ${code}. Vence en 10 minutos. Si no fuiste tú, ignora este correo.`,
     }),
   })
   if (!r.ok) {

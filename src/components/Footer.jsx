@@ -1,4 +1,6 @@
-import { Instagram, Twitter, Youtube } from 'lucide-react'
+import { Instagram } from 'lucide-react'
+
+const INSTAGRAM = 'https://www.instagram.com/ciento21.clothing/'
 
 const cols = [
   { title: 'Tienda', links: ['Colecciones', 'Novedades', 'Envíos', 'Devoluciones'] },
@@ -50,14 +52,15 @@ export default function Footer() {
             reservados.
           </p>
           <div className="flex items-center gap-5">
-            <a href="#" aria-label="Instagram" className="text-chalk/60 transition-colors hover:text-grape">
+            <a
+              href={INSTAGRAM}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram de CIENTOVEINTIUNO"
+              className="flex items-center gap-2 font-body text-sm text-chalk/60 transition-colors hover:text-grape"
+            >
               <Instagram size={20} />
-            </a>
-            <a href="#" aria-label="Twitter" className="text-chalk/60 transition-colors hover:text-grape">
-              <Twitter size={20} />
-            </a>
-            <a href="#" aria-label="YouTube" className="text-chalk/60 transition-colors hover:text-grape">
-              <Youtube size={20} />
+              @ciento21.clothing
             </a>
           </div>
         </div>

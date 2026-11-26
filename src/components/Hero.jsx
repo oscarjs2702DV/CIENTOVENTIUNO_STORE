@@ -9,7 +9,7 @@ export default function Hero() {
       className="relative flex h-screen min-h-[640px] flex-col items-center justify-center overflow-hidden text-center"
     >
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        className="absolute inset-0 bg-cover bg-[center_22%] bg-no-repeat"
         style={{ backgroundImage: `url(${heroBg})` }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-ink/80 via-ink/60 to-ink" />

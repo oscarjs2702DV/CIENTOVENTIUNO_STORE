@@ -71,7 +71,7 @@ export default function OrderStatus() {
                 ))}
               </ul>
               <div className="mt-4 space-y-1 border-t border-white/10 pt-4 font-body text-sm text-chalk/70">
-                <div className="flex justify-between"><span>Envío</span><span>{order.shipping ? formatCOP(order.shipping) : 'Gratis'}</span></div>
+                <div className="flex justify-between"><span>Envío</span><span>{order.shippingOnDelivery ? 'Contra entrega' : order.shipping ? formatCOP(order.shipping) : 'Gratis'}</span></div>
                 <div className="flex justify-between font-display text-xl uppercase tracking-widest2 text-white"><span>Total</span><span>{formatCOP(order.total)}</span></div>
               </div>
             </div>

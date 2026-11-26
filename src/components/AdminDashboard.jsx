@@ -257,7 +257,7 @@ function OrdersSection() {
                           <span>{i.name} · {i.color} · {i.size} · x{i.qty}</span><span>{formatCOP(i.price * i.qty)}</span>
                         </li>
                       ))}
-                      <li className="flex justify-between gap-4 text-chalk/50"><span>Envío</span><span>{o.shipping ? formatCOP(o.shipping) : 'Gratis'}</span></li>
+                      <li className="flex justify-between gap-4 text-chalk/50"><span>Envío</span><span>{o.buyer.shippingOnDelivery ? 'Contra entrega' : o.shipping ? formatCOP(o.shipping) : 'Gratis'}</span></li>
                     </ul>
                   </div>
                 )}

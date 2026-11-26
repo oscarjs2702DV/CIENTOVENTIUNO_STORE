@@ -14,8 +14,9 @@ export const CONTACT = {
 }
 
 export const FREE_SHIPPING_FROM = 70000
-// Valor del envío cuando ninguna prenda supera FREE_SHIPPING_FROM (igual en worker/orders.js).
-export const SHIPPING_COST = 15000
+// Envío cuando ninguna prenda supera FREE_SHIPPING_FROM (igual en worker/orders.js):
+// Bogotá paga tarifa fija; fuera de Bogotá se paga a la transportadora al recibir.
+export const BOGOTA_SHIPPING = 10000
 const UPDATED = '26 de noviembre de 2026'
 const BRAND = 'CIENTOVEINTIUNO'
 
@@ -71,7 +72,7 @@ export const PAGES = {
         h: '¿Cuánto cuesta?',
         body: [
           'Si tu pedido tiene al menos una prenda con precio superior a $70.000, el envío no tiene costo, a cualquier ciudad del país.',
-          'En los demás pedidos, el valor del envío depende de la ciudad de destino y se muestra antes de que confirmes la compra. Nunca cobramos nada que no hayas visto primero.',
+          'En los demás pedidos, el envío dentro de Bogotá cuesta $10.000 y se paga junto con tu compra. Fuera de Bogotá lo despachamos por Servientrega o Interrapidísimo y el valor del envío lo pagas directamente a la transportadora al recibir, según su tarifa para tu ciudad.',
         ],
       },
       {
@@ -245,7 +246,7 @@ export const PAGES = {
       {
         h: '5. Envíos',
         body: [
-          'Hacemos envíos a todo Colombia. El envío es gratis cuando tu compra incluye al menos una prenda de más de $70.000; en los demás casos, su valor se muestra antes de pagar. Los tiempos y condiciones están en la página de Envíos.',
+          'Hacemos envíos a todo Colombia. El envío es gratis cuando tu compra incluye al menos una prenda de más de $70.000; en los demás casos, cuesta $10.000 dentro de Bogotá, y fuera de Bogotá se paga a la transportadora (Servientrega o Interrapidísimo) al recibir, según su tarifa. Los tiempos y condiciones están en la página de Envíos.',
         ],
       },
       {

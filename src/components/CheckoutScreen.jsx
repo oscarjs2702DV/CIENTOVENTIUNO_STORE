@@ -4,7 +4,7 @@ import { useCart } from '../store/cartStore'
 import { useUI } from '../store/uiStore'
 import { useCustomer } from '../store/customerStore'
 import { formatCOP } from '../data/products'
-import { FREE_SHIPPING_FROM, SHIPPING_COST } from '../data/info'
+import { FREE_SHIPPING_FROM, BOGOTA_SHIPPING } from '../data/info'
 import { createOrder } from '../lib/api'
 
 const field =
@@ -50,7 +50,9 @@ export default function CheckoutScreen() {
   }, [user])
 
   const freeShipping = items.some((i) => i.price > FREE_SHIPPING_FROM)
-  const shipping = freeShipping ? 0 : SHIPPING_COST
+  const bogota = form.department === 'Bogotá D.C.'
+  const onDelivery = !freeShipping && !bogota
+  const shipping = freeShipping || !bogota ? 0 : BOGOTA_SHIPPING
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
   const submit = async (e) => {
@@ -148,13 +150,18 @@ export default function CheckoutScreen() {
               <dl className="mt-6 space-y-2 border-t border-white/10 pt-4 font-body text-sm">
                 <div className="flex justify-between text-chalk/70"><dt>Subtotal</dt><dd>{formatCOP(subtotal)}</dd></div>
                 <div className="flex justify-between text-chalk/70">
-                  <dt>Envío</dt><dd className={freeShipping ? 'text-emerald-400' : ''}>{freeShipping ? 'Gratis' : formatCOP(shipping)}</dd>
+                  <dt>Envío</dt><dd className={freeShipping ? 'text-emerald-400' : ''}>{freeShipping ? 'Gratis' : onDelivery ? 'Contra entrega' : formatCOP(shipping)}</dd>
                 </div>
                 <div className="flex items-baseline justify-between pt-2">
                   <dt className="font-display text-xl uppercase tracking-widest2 text-white">Total</dt>
                   <dd className="font-display text-3xl text-white">{formatCOP(subtotal + shipping)}</dd>
                 </div>
               </dl>
+              {onDelivery && (
+                <p className="mt-3 font-body text-xs leading-relaxed text-chalk/60">
+                  Fuera de Bogotá enviamos por Servientrega o Interrapidísimo; el valor del envío se lo pagas a la transportadora al recibir.
+                </p>
+              )}
 
               <label className="mt-6 flex gap-3 font-body text-xs leading-relaxed text-chalk/70">
                 <input type="checkbox" required checked={accept} onChange={(e) => setAccept(e.target.checked)} className="mt-0.5 accent-grape" />

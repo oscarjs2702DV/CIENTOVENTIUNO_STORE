@@ -5,7 +5,8 @@
 // Variables: WOMPI_PUBLIC_KEY (wrangler.jsonc). Secretos en Cloudflare: WOMPI_INTEGRITY_SECRET y WOMPI_EVENTS_SECRET.
 
 export const FREE_SHIPPING_FROM = 70000
-export const SHIPPING_COST = 15000
+// Bogotá tiene tarifa fija; fuera de Bogotá el envío lo cobra la transportadora al recibir.
+export const BOGOTA_SHIPPING = 10000
 const MAX_QTY = 10
 
 export class OrderError extends Error {
@@ -86,7 +87,11 @@ async function buildItems(env, raw) {
   return items
 }
 
-export const shippingFor = (items) => (items.some((i) => i.price > FREE_SHIPPING_FROM) ? 0 : SHIPPING_COST)
+export const isBogota = (b) => b.department === 'Bogotá D.C.'
+export function shippingFor(items, buyer) {
+  if (items.some((i) => i.price > FREE_SHIPPING_FROM)) return { shipping: 0, onDelivery: false }
+  return isBogota(buyer) ? { shipping: BOGOTA_SHIPPING, onDelivery: false } : { shipping: 0, onDelivery: true }
+}
 
 const publicOrder = (o) => ({
   reference: o.reference,
@@ -94,6 +99,7 @@ const publicOrder = (o) => ({
   items: JSON.parse(o.items),
   subtotal: o.subtotal,
   shipping: o.shipping,
+  shippingOnDelivery: Boolean(JSON.parse(o.buyer).shippingOnDelivery),
   total: o.total,
   createdAt: o.created_at,
 })
@@ -130,7 +136,8 @@ async function create(request, env, url, body) {
   const buyer = parseBuyer(body?.buyer)
   const items = await buildItems(env, body?.items)
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0)
-  const shipping = shippingFor(items)
+  const { shipping, onDelivery } = shippingFor(items, buyer)
+  buyer.shippingOnDelivery = onDelivery
   const total = subtotal + shipping
   const reference = `C121-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
   const now = new Date().toISOString()

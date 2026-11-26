@@ -23,6 +23,15 @@ export default function App() {
   const { init, user, loading } = useAuth()
   const needsAuth = view === 'admin'
   const initCustomer = useCustomer((s) => s.init)
+  const customer = useCustomer((s) => s.user)
+
+  // Después de ingresar, vuelve a la página desde donde se pidió la cuenta.
+  useEffect(() => {
+    if (!customer || view !== 'cuenta') return
+    let back = null
+    try { back = sessionStorage.getItem('c121-volver'); sessionStorage.removeItem('c121-volver') } catch { /* nada */ }
+    if (back && back !== '#/cuenta') window.location.hash = back
+  }, [customer, view])
 
   useEffect(() => { if (needsAuth) init() }, [needsAuth, init])
   useEffect(() => { if (!needsAuth) initCustomer() }, [needsAuth, initCustomer])

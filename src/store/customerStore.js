@@ -4,6 +4,7 @@ import {
   removeAvatar, updateProfile, uploadAvatar,
 } from '../lib/api'
 import { useToast } from './toastStore'
+import { useCart } from './cartStore'
 
 const GOOGLE_ERRORS = {
   'no-disponible': 'El acceso con Google todavía no está disponible.',
@@ -63,6 +64,7 @@ export const useCustomer = create((set, get) => ({
   signOut: async () => {
     await logoutCustomer()
     set({ user: null, menuOpen: false, profileOpen: false })
+    useCart.getState().clear()
     useToast.getState().info('Cerraste sesión')
   },
   saveProfile: async (data) => set({ user: (await updateProfile(data)).user }),

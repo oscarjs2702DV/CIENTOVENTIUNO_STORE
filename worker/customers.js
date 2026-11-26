@@ -127,7 +127,7 @@ function readCookie(request, name) {
   return m ? m[1] : null
 }
 
-async function currentCustomer(request, env) {
+export async function currentCustomer(request, env) {
   const token = readCookie(request, COOKIE)
   if (!token || !/^[0-9a-f]{64}$/.test(token)) return null
   return env.DB.prepare(

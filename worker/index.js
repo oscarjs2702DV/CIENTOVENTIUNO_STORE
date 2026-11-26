@@ -1,4 +1,4 @@
-import { CustomerError, handleCustomers } from './customers.js'
+import { CustomerError, currentCustomer, handleCustomers } from './customers.js'
 import { OrderError, handleOrders, listOrders } from './orders.js'
 import { checkKey, clearCookie, isAdmin, isConfigured, sessionCookie } from './session.js'
 
@@ -155,7 +155,7 @@ async function handle(request, env, ctx) {
 
   if (pathname.startsWith('/api/admin/')) return handleAdmin(request, env, url)
   if (pathname.startsWith('/api/pedidos') || pathname === '/api/wompi/eventos') {
-    return handleOrders(request, env, url, readJson, json)
+    return handleOrders(request, env, url, readJson, json, currentCustomer)
   }
   if (pathname.startsWith('/api/cuenta/')) return handleCustomers(request, env, url, readJson, json, ctx)
 

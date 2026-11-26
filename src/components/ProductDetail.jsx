@@ -12,6 +12,7 @@ import {
 import { listProducts } from '../lib/api'
 import { formatCOP } from '../data/products'
 import { useCart } from '../store/cartStore'
+import { useCustomer } from '../store/customerStore'
 import { useUI } from '../store/uiStore'
 import { normalizeVariants } from '../lib/variants'
 import { useToast } from '../store/toastStore'
@@ -50,6 +51,15 @@ export default function ProductDetail() {
   const add = useCart((s) => s.add)
   const openCart = useCart((s) => s.open)
   const toast = useToast()
+  const customer = useCustomer((s) => s.user)
+  const goLogin = useUI((s) => s.goLogin)
+  // Solo los clientes registrados pueden añadir a la bolsa y comprar.
+  const needLogin = () => {
+    if (customer) return false
+    toast.info('Ingresa o crea tu cuenta para añadir prendas a la bolsa')
+    goLogin()
+    return true
+  }
 
   const [product, setProduct] = useState(null)
   const [related, setRelated] = useState([])
@@ -158,7 +168,7 @@ export default function ProductDetail() {
   }
 
   const handleAdd = () => {
-    if (agotado) return
+    if (agotado || needLogin()) return
     if (!selectedSize) {
       askForSize()
       return
@@ -170,7 +180,7 @@ export default function ProductDetail() {
   }
 
   const handleViewCart = () => {
-    if (agotado) return
+    if (agotado || needLogin()) return
     if (!selectedSize) {
       askForSize()
       return

@@ -58,6 +58,11 @@ export const useUI = create((set, get) => ({
     writeHash('admin', null)
     window.scrollTo({ top: 0, behavior: 'instant' })
   },
+  // Ir a ingresar y, al terminar, volver a donde estaba (sirve también al volver de Google).
+  goLogin: () => {
+    try { sessionStorage.setItem('c121-volver', window.location.hash || '#/') } catch { /* sin almacenamiento */ }
+    get().goAccount()
+  },
   goAccount: () => {
     set({ view: 'cuenta', selectedProductId: null })
     writeHash('cuenta', null)

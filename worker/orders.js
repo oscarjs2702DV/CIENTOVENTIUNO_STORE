@@ -130,7 +130,7 @@ async function settle(env, order, tx) {
   return { ...order, status: r.meta.changes ? status : order.status }
 }
 
-async function create(request, env, url, body) {
+async function create(request, env, url, body, customer) {
   const missing = ['WOMPI_PUBLIC_KEY', 'WOMPI_INTEGRITY_SECRET'].filter((k) => !env[k])
   if (missing.length) throw new OrderError(`Los pagos todavía no están configurados (falta ${missing.join(', ')})`, 503)
   if (env.CUSTOMER_LIMIT) {
@@ -143,6 +143,7 @@ async function create(request, env, url, body) {
   const { shipping, onDelivery } = shippingFor(items, buyer)
   buyer.shippingOnDelivery = onDelivery
   if (isTest(env)) buyer.test = true
+  buyer.customerId = customer.id
   const total = subtotal + shipping
   const reference = `C121-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
   const now = new Date().toISOString()
@@ -162,6 +163,10 @@ async function create(request, env, url, body) {
     'redirect-url': `${url.origin}/?pedido=${reference}`,
     'customer-data:email': buyer.email,
     'customer-data:full-name': buyer.name,
+    'customer-data:phone-number': buyer.phone.replace(/\D/g, '').replace(/^57(?=\d{10}$)/, ''),
+    'customer-data:phone-number-prefix': '+57',
+    'customer-data:legal-id': buyer.doc.replace(/[^0-9A-Za-z]/g, ''),
+    'customer-data:legal-id-type': buyer.docType,
   })
   return { reference, total, checkoutUrl: `https://checkout.wompi.co/p/?${q}` }
 }
@@ -199,13 +204,15 @@ export async function listOrders(env) {
   return results.map((o) => ({ ...publicOrder(o), buyer: JSON.parse(o.buyer), transactionId: o.transaction_id, paymentMethod: o.payment_method }))
 }
 
-export async function handleOrders(request, env, url, readJson, json) {
+export async function handleOrders(request, env, url, readJson, json, currentCustomer) {
   await ensureSchema(env)
   const { pathname } = url
   const { method } = request
   if (pathname === '/api/pedidos' && method === 'POST') {
     if (request.headers.get('Origin') !== url.origin) throw new OrderError('Origen no permitido', 403)
-    return json(await create(request, env, url, await readJson(request)), 201)
+    const customer = await currentCustomer(request, env)
+    if (!customer) throw new OrderError('Ingresa a tu cuenta para comprar', 401)
+    return json(await create(request, env, url, await readJson(request), customer), 201)
   }
   const m = pathname.match(/^\/api\/pedidos\/(C121-[A-Z0-9-]{6,40})$/)
   if (m && method === 'GET') return json(await status(env, m[1], url.searchParams.get('id')))

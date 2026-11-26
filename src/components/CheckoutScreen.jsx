@@ -36,6 +36,8 @@ export default function CheckoutScreen() {
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0)
   const backToStore = useUI((s) => s.backToStore)
   const user = useCustomer((s) => s.user)
+  const userLoading = useCustomer((s) => s.loading)
+  const goLogin = useUI((s) => s.goLogin)
   const [form, setForm] = useState(() => ({
     name: '', email: '', phone: '', docType: 'CC', doc: '',
     department: 'Bogotá D.C.', city: 'Bogotá', address: '', notes: '', ...readDraft(),
@@ -71,6 +73,21 @@ export default function CheckoutScreen() {
       setError(err.message)
       setSending(false)
     }
+  }
+
+  if (!user) {
+    return (
+      <section className="flex flex-col items-center gap-6 px-5 pb-24 pt-40 text-center">
+        <Lock size={48} className="text-white/20" />
+        <h1 className="section-title">{userLoading ? 'Cargando...' : 'Ingresa para comprar'}</h1>
+        {!userLoading && (
+          <>
+            <p className="max-w-md font-body text-chalk/70">Para hacer un pedido necesitas una cuenta. Así puedes seguir tus compras y no repetir tus datos.</p>
+            <button onClick={goLogin} className="btn-primary">Ingresar o crear cuenta</button>
+          </>
+        )}
+      </section>
+    )
   }
 
   if (items.length === 0) {

@@ -5,6 +5,9 @@
   "workers_dev": true,
   "preview_urls": true,
   "observability": { "enabled": true },
+  // Llave pública de Wompi (no es secreta). pub_test_ = pruebas; cambiar por pub_prod_ al salir en vivo.
+  // Secretos en el panel: WOMPI_INTEGRITY_SECRET y WOMPI_EVENTS_SECRET.
+  "vars": { "WOMPI_PUBLIC_KEY": "pub_test_sTyn7J7SP28oVTHSV1XOp2nw6boIejT2" },
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
@@ -22,6 +25,7 @@
   ],
   // Las vistas previas de ramas usan los mismos datos que la tienda.
   "previews": {
+    "vars": { "WOMPI_PUBLIC_KEY": "pub_test_sTyn7J7SP28oVTHSV1XOp2nw6boIejT2" },
     "d1_databases": [
       {
         "binding": "DB",

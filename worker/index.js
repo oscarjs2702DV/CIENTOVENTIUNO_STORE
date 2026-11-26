@@ -1,4 +1,5 @@
 import { CustomerError, handleCustomers } from './customers.js'
+import { OrderError, handleOrders, listOrders } from './orders.js'
 import { checkKey, clearCookie, isAdmin, isConfigured, sessionCookie } from './session.js'
 
 const json = (data, status = 200) =>
@@ -113,6 +114,7 @@ async function handleAdmin(request, env, url) {
 
   if (!(await isAdmin(request, env))) return fail('No autorizado', 401)
   if (path === '/session' && method === 'GET') return json(ADMIN)
+  if (path === '/pedidos' && method === 'GET') return json(await listOrders(env))
 
   if (path === '/images' && method === 'POST') {
     const { type, data } = await readImage(request)
@@ -152,6 +154,9 @@ async function handle(request, env, ctx) {
   const { pathname } = url
 
   if (pathname.startsWith('/api/admin/')) return handleAdmin(request, env, url)
+  if (pathname.startsWith('/api/pedidos') || pathname === '/api/wompi/eventos') {
+    return handleOrders(request, env, url, readJson, json)
+  }
   if (pathname.startsWith('/api/cuenta/')) return handleCustomers(request, env, url, readJson, json, ctx)
 
   // La administración no tiene botón en la tienda: se entra escribiendo /admin.
@@ -190,6 +195,7 @@ export default {
       return await handle(request, env, ctx)
     } catch (err) {
       if (err instanceof BadInput) return fail(err.message, 400)
+      if (err instanceof OrderError) return fail(err.message, err.status)
       if (err instanceof CustomerError) return fail(err.message, err.status)
       console.error(err)
       return fail('Error interno', 500)

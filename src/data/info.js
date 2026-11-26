@@ -9,10 +9,13 @@ export const CONTACT = {
   whatsappLabel: '+57 302 692 5030',
   instagram: 'https://www.instagram.com/ciento21.clothing/',
   instagramUser: '@ciento21.clothing',
+  facebook: 'https://www.facebook.com/profile.php?id=61596765699983',
   place: 'Fontibón, La Cabaña · Bogotá, Colombia',
 }
 
 export const FREE_SHIPPING_FROM = 70000
+// Valor del envío cuando ninguna prenda supera FREE_SHIPPING_FROM (igual en worker/orders.js).
+export const SHIPPING_COST = 15000
 const UPDATED = '26 de noviembre de 2026'
 const BRAND = 'CIENTOVEINTIUNO'
 

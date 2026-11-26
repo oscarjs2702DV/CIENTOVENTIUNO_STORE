@@ -2,9 +2,12 @@ import { useEffect } from 'react'
 import { X, Plus, Minus, Trash2, ShoppingBag, ArrowRight } from 'lucide-react'
 import { useCart } from '../store/cartStore'
 import { formatCOP } from '../data/products'
+import { useUI } from '../store/uiStore'
+import { FREE_SHIPPING_FROM } from '../data/info'
 
 export default function CartDrawer() {
   const { isOpen, close, items, inc, dec, remove, subtotal } = useCart()
+  const goCheckout = useUI((s) => s.goCheckout)
 
   useEffect(() => {
     if (isOpen) {
@@ -134,9 +137,11 @@ export default function CartDrawer() {
               </span>
             </div>
             <p className="mb-4 font-body text-xs text-chalk/50">
-              Impuestos incluidos. Envío calculado al pagar.
+              {items.some((i) => i.price > FREE_SHIPPING_FROM)
+                ? 'Impuestos incluidos. Tu envío es gratis.'
+                : 'Impuestos incluidos. Envío calculado al pagar.'}
             </p>
-            <button className="btn-primary w-full">
+            <button onClick={() => { close(); goCheckout() }} className="btn-primary w-full">
               Proceder al Pago
               <ArrowRight size={18} />
             </button>

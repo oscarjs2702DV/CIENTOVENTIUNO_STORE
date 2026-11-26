@@ -9,6 +9,8 @@ import ProductDetail from './components/ProductDetail'
 import AuthScreen from './components/AuthScreen'
 import AccountScreen from './components/AccountScreen'
 import InfoPage from './components/InfoPage'
+import CheckoutScreen from './components/CheckoutScreen'
+import OrderStatus from './components/OrderStatus'
 import ProfileDialog from './components/ProfileDialog'
 import AdminDashboard from './components/AdminDashboard'
 import ToastContainer from './components/ToastContainer'
@@ -48,6 +50,10 @@ export default function App() {
   let content
   if (view === 'product') {
     content = <ProductDetail />
+  } else if (view === 'pago') {
+    content = <CheckoutScreen />
+  } else if (view === 'pedido') {
+    content = <OrderStatus />
   } else if (view === 'info') {
     content = <InfoPage />
   } else if (view === 'cuenta') {

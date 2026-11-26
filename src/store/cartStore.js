@@ -1,6 +1,9 @@
 import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 
-export const useCart = create((set, get) => ({
+// El carrito se guarda en el navegador para que no se pierda al ir a pagar a Wompi.
+
+export const useCart = create(persist((set, get) => ({
   items: [],
   isOpen: false,
 
@@ -61,4 +64,10 @@ export const useCart = create((set, get) => ({
   count: () => get().items.reduce((n, i) => n + i.qty, 0),
   subtotal: () =>
     get().items.reduce((sum, i) => sum + i.price * i.qty, 0),
+}), {
+  name: 'c121-carrito',
+  storage: createJSONStorage(() => {
+    try { localStorage.setItem('c121-t', '1'); localStorage.removeItem('c121-t'); return localStorage } catch { return undefined }
+  }),
+  partialize: (s) => ({ items: s.items }),
 }))

@@ -37,3 +37,7 @@ export const updateProfile = (data) => send('/api/cuenta/perfil', 'PUT', data)
 export const uploadAvatar = (blob) =>
   request('/api/cuenta/foto', { method: 'POST', headers: { 'Content-Type': blob.type }, body: blob })
 export const removeAvatar = () => request('/api/cuenta/foto', { method: 'DELETE' })
+export const createOrder = (data) => send('/api/pedidos', 'POST', data)
+export const getOrder = (ref, txId) =>
+  request(`/api/pedidos/${encodeURIComponent(ref)}${txId ? `?id=${encodeURIComponent(txId)}` : ''}`)
+export const listOrders = () => request('/api/admin/pedidos')

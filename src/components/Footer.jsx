@@ -1,4 +1,4 @@
-import { Instagram, Mail, MapPin, MessageCircle } from 'lucide-react'
+import { Facebook, Instagram, Mail, MapPin, MessageCircle } from 'lucide-react'
 import { CONTACT, FOOTER_LINKS } from '../data/info'
 
 const linkCls = 'font-body text-sm text-chalk/60 transition-colors hover:text-grape'
@@ -71,6 +71,16 @@ export default function Footer() {
             reservados.
           </p>
           <div className="flex items-center gap-5">
+            <a
+              href={CONTACT.facebook}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Facebook de CIENTOVEINTIUNO"
+              className="flex items-center gap-2 font-body text-sm text-chalk/60 transition-colors hover:text-grape"
+            >
+              <Facebook size={20} />
+              Cientoventiuno
+            </a>
             <a
               href={CONTACT.instagram}
               target="_blank"

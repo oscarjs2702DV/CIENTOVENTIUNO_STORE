@@ -3,7 +3,7 @@ import {
   Package, Boxes, AlertOctagon, Plus, Pencil, Trash2, X, LogOut,
   Store, Shield, Save, Upload, ImageIcon,
 } from 'lucide-react'
-import { listProducts, createProduct, updateProduct, deleteProduct, uploadImage } from '../lib/api'
+import { listOrders, listProducts, createProduct, updateProduct, deleteProduct, uploadImage } from '../lib/api'
 import { useAuth } from '../store/authStore'
 import { useUI } from '../store/uiStore'
 import { useToast } from '../store/toastStore'
@@ -163,6 +163,8 @@ export default function AdminDashboard() {
             </table>
           </div>
         )}
+
+        <OrdersSection />
       </div>
 
       {modal && (
@@ -183,6 +185,87 @@ export default function AdminDashboard() {
         onConfirm={confirmDelete}
         onCancel={() => setConfirmState(null)}
       />
+    </div>
+  )
+}
+
+const ORDER_STATUS = {
+  APPROVED: ['Pagado', 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'],
+  PENDING: ['Pendiente', 'border-amber-500/40 bg-amber-500/10 text-amber-300'],
+  DECLINED: ['Rechazado', 'border-red-500/40 bg-red-500/10 text-red-400'],
+  VOIDED: ['Anulado', 'border-red-500/40 bg-red-500/10 text-red-400'],
+  ERROR: ['Error', 'border-red-500/40 bg-red-500/10 text-red-400'],
+}
+
+function OrdersSection() {
+  const [orders, setOrders] = useState(null)
+  const [error, setError] = useState(null)
+  const [open, setOpen] = useState(null)
+  const [onlyPaid, setOnlyPaid] = useState(true)
+  const load = useCallback(() => {
+    listOrders().then(setOrders, (e) => setError(e.message))
+  }, [])
+  useEffect(load, [load])
+  const shown = (orders || []).filter((o) => !onlyPaid || o.status === 'APPROVED')
+
+  return (
+    <div className="mt-16">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-display text-2xl uppercase tracking-widest2 text-white">Pedidos</h2>
+        <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2 font-body text-sm text-chalk/70">
+            <input type="checkbox" checked={onlyPaid} onChange={(e) => setOnlyPaid(e.target.checked)} className="accent-grape" />
+            Solo pagados
+          </label>
+          <button onClick={load} className="border border-white/20 px-3 py-1.5 font-display text-xs uppercase tracking-widest2 text-chalk hover:border-grape hover:text-grape">Actualizar</button>
+        </div>
+      </div>
+      {error ? (
+        <p className="font-body text-red-400">{error}</p>
+      ) : !orders ? (
+        <p className="py-10 text-center font-display text-xl uppercase tracking-widest2 text-chalk/50">Cargando pedidos...</p>
+      ) : shown.length === 0 ? (
+        <p className="py-10 text-center font-display text-xl uppercase tracking-widest2 text-chalk/50">No hay pedidos todavía</p>
+      ) : (
+        <ul className="divide-y divide-white/10 border-y border-white/10">
+          {shown.map((o) => {
+            const [label, cls] = ORDER_STATUS[o.status] || ORDER_STATUS.PENDING
+            const b = o.buyer
+            return (
+              <li key={o.reference} className="py-4">
+                <button onClick={() => setOpen(open === o.reference ? null : o.reference)} className="flex w-full flex-wrap items-center gap-x-6 gap-y-2 text-left">
+                  <span className={`border px-3 py-1 font-display text-xs uppercase tracking-widest2 ${cls}`}>{label}</span>
+                  <span className="font-body text-sm text-chalk/60">{new Date(o.createdAt).toLocaleString('es-CO')}</span>
+                  <span className="font-display text-base uppercase tracking-wide text-white">{b.name}</span>
+                  <span className="font-body text-sm text-chalk/60">{b.city}</span>
+                  <span className="ml-auto font-display text-lg text-white">{formatCOP(o.total)}</span>
+                </button>
+                {open === o.reference && (
+                  <div className="mt-4 grid gap-6 bg-plum/20 p-4 font-body text-sm text-chalk/80 md:grid-cols-2">
+                    <div className="space-y-1">
+                      <p><span className="text-chalk/50">Referencia:</span> {o.reference}</p>
+                      <p><span className="text-chalk/50">Documento:</span> {b.docType} {b.doc}</p>
+                      <p><span className="text-chalk/50">Correo:</span> {b.email}</p>
+                      <p><span className="text-chalk/50">Celular:</span> {b.phone}</p>
+                      <p><span className="text-chalk/50">Dirección:</span> {b.address}, {b.city}, {b.department}</p>
+                      {b.notes && <p><span className="text-chalk/50">Notas:</span> {b.notes}</p>}
+                      {o.paymentMethod && <p><span className="text-chalk/50">Pago:</span> {o.paymentMethod} · {o.transactionId}</p>}
+                    </div>
+                    <ul className="space-y-1">
+                      {o.items.map((i, n) => (
+                        <li key={n} className="flex justify-between gap-4">
+                          <span>{i.name} · {i.color} · {i.size} · x{i.qty}</span><span>{formatCOP(i.price * i.qty)}</span>
+                        </li>
+                      ))}
+                      <li className="flex justify-between gap-4 text-chalk/50"><span>Envío</span><span>{o.shipping ? formatCOP(o.shipping) : 'Gratis'}</span></li>
+                    </ul>
+                  </div>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </div>
   )
 }

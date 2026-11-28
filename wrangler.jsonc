@@ -7,7 +7,7 @@
   "observability": { "enabled": true },
   // Llave pública de Wompi (no es secreta). pub_test_ = pruebas; cambiar por pub_prod_ al salir en vivo.
   // Secretos en el panel: WOMPI_INTEGRITY_SECRET y WOMPI_EVENTS_SECRET.
-  "vars": { "WOMPI_PUBLIC_KEY": "pub_test_sTyn7J7SP28oVTHSV1XOp2nw6boIejT2" },
+  "vars": { "WOMPI_PUBLIC_KEY": "pub_prod_4nWFezuwaivH6aCHHLnK7sEdrJHbGccS" },
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",

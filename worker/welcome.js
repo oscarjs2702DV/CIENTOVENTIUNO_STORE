@@ -62,7 +62,7 @@ export function sendWelcome(env, ctx, { name, email, origin }) {
 export const mailReady = (env) => Boolean(env.RESEND_API_KEY && env.MAIL_FROM)
 
 // Los correos necesitan una dirección pública fija para el logo: la de la tienda publicada.
-const MAIL_LOGO = 'https://cientoventiuno-store.cientoventiuno-store.workers.dev/assets/logo-correo.png'
+const MAIL_LOGO = 'https://cientoventiuno.com.de/assets/logo-correo.png'
 
 export async function sendCode(env, { email, code }) {
   const r = await fetch('https://api.resend.com/emails', {

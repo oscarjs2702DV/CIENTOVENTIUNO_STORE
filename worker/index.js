@@ -84,6 +84,8 @@ async function readImage(request) {
 }
 
 const ADMIN = { name: 'Administrador' }
+const SITE_HOST = 'cientoventiuno.com.de'
+const OLD_HOSTS = ['cientoventiuno-store.cientoventiuno-store.workers.dev', 'www.cientoventiuno.com.de']
 
 function withCookie(data, cookie) {
   const res = json(data)
@@ -152,6 +154,12 @@ async function handleAdmin(request, env, url) {
 async function handle(request, env, ctx) {
   const url = new URL(request.url)
   const { pathname } = url
+
+  // La tienda vive en cientoventiuno.com.de: las páginas pedidas por la
+  // dirección antigua (workers.dev) o con www se envían allí.
+  if (OLD_HOSTS.includes(url.hostname) && request.method === 'GET' && !pathname.startsWith('/api/')) {
+    return Response.redirect(`https://${SITE_HOST}${pathname}${url.search}`, 301)
+  }
 
   if (pathname.startsWith('/api/admin/')) return handleAdmin(request, env, url)
   if (pathname.startsWith('/api/pedidos') || pathname === '/api/wompi/eventos') {

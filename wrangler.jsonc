@@ -5,13 +5,19 @@
   "workers_dev": true,
   "preview_urls": true,
   "observability": { "enabled": true },
+  // Dominio propio de la tienda; www y workers.dev redirigen aquí (worker/index.js).
+  "routes": [
+    { "pattern": "cientoventiuno.com.de", "custom_domain": true },
+    { "pattern": "www.cientoventiuno.com.de", "custom_domain": true }
+  ],
   // Llave pública de Wompi (no es secreta). pub_test_ = pruebas; cambiar por pub_prod_ al salir en vivo.
   // Secretos en el panel: WOMPI_INTEGRITY_SECRET y WOMPI_EVENTS_SECRET.
   "vars": { "WOMPI_PUBLIC_KEY": "pub_prod_4nWFezuwaivH6aCHHLnK7sEdrJHbGccS" },
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*", "/img/*"]
+    // Todo pasa por el Worker para poder redirigir la dirección antigua al dominio.
+    "run_worker_first": true
   },
   "d1_databases": [
     {

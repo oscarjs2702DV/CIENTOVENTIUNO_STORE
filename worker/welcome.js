@@ -1,5 +1,5 @@
 // Correo de bienvenida. Se envía con Resend solo si están los secretos
-// RESEND_API_KEY y MAIL_FROM (p. ej. "CIENTOVENTIUNO <hola@tudominio.com>").
+// RESEND_API_KEY y MAIL_FROM (p. ej. "CIENTOVEINTIUNO <hola@tudominio.com>").
 // Sin ellos no se envía nada y el registro funciona igual.
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 
@@ -7,18 +7,18 @@ export function welcomeHtml(name, origin) {
   const hola = name ? `Hola, ${esc(name)}` : 'Hola'
   return `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="color-scheme" content="dark"><title>Bienvenido a CIENTOVENTIUNO</title></head>
+<meta name="color-scheme" content="dark"><title>Bienvenido a CIENTOVEINTIUNO</title></head>
 <body style="margin:0;padding:0;background:#0a0a0a;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;">
 <tr><td align="center" style="padding:32px 16px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#121212;border:1px solid #2a2a2a;">
     <tr><td align="center" style="padding:32px 24px 8px;">
-      <img src="${origin}/assets/logo-correo.png" width="160" height="80" alt="CIENTOVENTIUNO" style="display:block;border:0;">
+      <img src="${origin}/assets/logo-correo.png" width="160" height="80" alt="CIENTOVEINTIUNO" style="display:block;border:0;">
     </td></tr>
     <tr><td align="center" style="padding:16px 32px 0;font-family:Arial,Helvetica,sans-serif;">
       <p style="margin:0;color:#8A2BE2;font-size:13px;letter-spacing:3px;text-transform:uppercase;">${hola}</p>
       <h1 style="margin:12px 0 0;color:#ffffff;font-size:26px;line-height:1.3;letter-spacing:1px;">
-        Te has registrado exitosamente en CIENTOVENTIUNO
+        Te has registrado exitosamente en CIENTOVEINTIUNO
       </h1>
       <p style="margin:16px 0 0;color:#bdbdbd;font-size:15px;line-height:1.6;">
         Gracias por unirte. Ya puedes guardar tus datos, completar tu perfil y recibir
@@ -32,7 +32,7 @@ export function welcomeHtml(name, origin) {
     </td></tr>
   </table>
   <p style="margin:20px 0 0;color:#666666;font-family:Arial,Helvetica,sans-serif;font-size:12px;">
-    Recibes este correo porque creaste una cuenta en CIENTOVENTIUNO.
+    Recibes este correo porque creaste una cuenta en CIENTOVEINTIUNO.
   </p>
 </td></tr></table>
 </body></html>`
@@ -46,9 +46,9 @@ export function sendWelcome(env, ctx, { name, email, origin }) {
     body: JSON.stringify({
       from: env.MAIL_FROM,
       to: [email],
-      subject: 'Te has registrado exitosamente en CIENTOVENTIUNO',
+      subject: 'Te has registrado exitosamente en CIENTOVEINTIUNO',
       html: welcomeHtml(name, origin),
-      text: `${name ? `Hola, ${name}. ` : ''}Te has registrado exitosamente en CIENTOVENTIUNO. Visítanos en ${origin}/`,
+      text: `${name ? `Hola, ${name}. ` : ''}Te has registrado exitosamente en CIENTOVEINTIUNO. Visítanos en ${origin}/`,
     }),
   }).then(async (r) => { if (!r.ok) console.error('Correo de bienvenida falló', r.status, await r.text()) })
     .catch((err) => console.error('Correo de bienvenida falló', err))
@@ -71,21 +71,21 @@ export async function sendCode(env, { email, code }) {
     body: JSON.stringify({
       from: env.MAIL_FROM,
       to: [email],
-      subject: 'CÓDIGO DE REGISTRO DE CIENTOVENTIUNO',
+      subject: 'CÓDIGO DE REGISTRO DE CIENTOVEINTIUNO',
       html: `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="color-scheme" content="dark"></head>
 <body style="margin:0;padding:32px 16px;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#121212;border:1px solid #2a2a2a;">
 <tr><td align="center" style="padding:32px 28px 0;">
-<img src="${MAIL_LOGO}" width="160" height="80" alt="CIENTOVENTIUNO" style="display:block;border:0;">
+<img src="${MAIL_LOGO}" width="160" height="80" alt="CIENTOVEINTIUNO" style="display:block;border:0;">
 </td></tr>
 <tr><td align="center" style="padding:24px 28px 32px;">
 <p style="margin:0;color:#8A2BE2;font-size:14px;font-weight:bold;letter-spacing:3px;text-transform:uppercase;">Código de registro</p>
-<p style="margin:16px 0 0;color:#d6d6d6;font-size:15px;font-weight:600;line-height:1.6;">Escribe este código en CIENTOVENTIUNO para terminar de crear tu cuenta:</p>
+<p style="margin:16px 0 0;color:#d6d6d6;font-size:15px;font-weight:600;line-height:1.6;">Escribe este código en CIENTOVEINTIUNO para terminar de crear tu cuenta:</p>
 <p style="margin:20px 0 0;color:#ffffff;font-size:38px;font-weight:900;letter-spacing:10px;">${code}</p>
 <p style="margin:20px 0 0;color:#9a9a9a;font-size:13px;font-weight:600;line-height:1.6;">Vence en 10 minutos. Si no fuiste tú, ignora este correo.</p>
 </td></tr></table></td></tr></table></body></html>`,
-      text: `Tu código de registro de CIENTOVENTIUNO es ${code}. Vence en 10 minutos. Si no fuiste tú, ignora este correo.`,
+      text: `Tu código de registro de CIENTOVEINTIUNO es ${code}. Vence en 10 minutos. Si no fuiste tú, ignora este correo.`,
     }),
   })
   if (!r.ok) {

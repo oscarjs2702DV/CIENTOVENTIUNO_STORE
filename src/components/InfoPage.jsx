@@ -25,8 +25,8 @@ export default function InfoPage() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' })
-    if (page) document.title = `${page.title} · CIENTOVENTIUNO`
-    return () => { document.title = 'CIENTOVENTIUNO' }
+    if (page) document.title = `${page.title} · CIENTOVEINTIUNO`
+    return () => { document.title = 'CIENTOVEINTIUNO' }
   }, [slug, page])
 
   if (!page) {

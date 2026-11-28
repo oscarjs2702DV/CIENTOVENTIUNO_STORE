@@ -50,7 +50,7 @@ export default function CheckoutScreen() {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState(null)
 
-  useEffect(() => { document.title = 'Pagar · CIENTOVENTIUNO'; return () => { document.title = 'CIENTOVENTIUNO' } }, [])
+  useEffect(() => { document.title = 'Pagar · CIENTOVEINTIUNO'; return () => { document.title = 'CIENTOVEINTIUNO' } }, [])
   useEffect(() => {
     if (user) setForm((f) => ({ ...f, name: f.name || user.name || '' }))
   }, [user])

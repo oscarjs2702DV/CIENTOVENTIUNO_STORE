@@ -48,6 +48,7 @@ export default function ProductDetail() {
   const productId = useUI((s) => s.selectedProductId)
   const backToStore = useUI((s) => s.backToStore)
   const openProduct = useUI((s) => s.openProduct)
+  const goBack = useUI((s) => s.goBack)
   const add = useCart((s) => s.add)
   const openCart = useCart((s) => s.open)
   const toast = useToast()
@@ -193,7 +194,7 @@ export default function ProductDetail() {
   return (
     <div className="min-h-screen bg-ink pt-20">
       <div className="mx-auto max-w-[1920px] px-4 py-6 lg:px-[100px] xl:px-[200px]">
-        <button onClick={backToStore} className="flex items-center gap-2 font-display text-lg uppercase tracking-widest2 text-chalk transition-colors hover:text-grape">
+        <button onClick={goBack} className="flex items-center gap-2 font-display text-lg uppercase tracking-widest2 text-chalk transition-colors hover:text-grape">
           <ArrowLeft size={20} />
           Volver a la tienda
         </button>

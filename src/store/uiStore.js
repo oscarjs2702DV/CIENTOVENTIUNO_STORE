@@ -30,7 +30,23 @@ function writeHash(view, selectedProductId) {
   else if (view === 'info') return
   else if (view === 'product' && selectedProductId) url = `/#/product/${selectedProductId}`
   const { pathname, search, hash } = window.location
-  if (pathname + search + hash !== url) window.history.replaceState(null, '', url)
+  if (pathname + search + hash === url) return
+  // Cada pantalla es una entrada del historial: el botón "atrás" (también el
+  // del mouse) vuelve dentro de la tienda. Se guarda dónde estaba la página
+  // para regresar a ese mismo punto.
+  const { history } = window
+  history.replaceState({ ...(history.state || {}), y: window.scrollY }, '')
+  history.pushState({ p: 1 }, '', url)
+}
+
+// Vuelve a la posición guardada cuando ya se pintó la pantalla.
+function restoreScroll(y) {
+  let tries = 0
+  const go = () => {
+    window.scrollTo({ top: y, behavior: 'instant' })
+    if (Math.abs(window.scrollY - y) > 2 && tries++ < 20) setTimeout(go, 50)
+  }
+  requestAnimationFrame(go)
 }
 
 const initial = readHash()
@@ -73,6 +89,12 @@ export const useUI = create((set, get) => ({
     writeHash('pago', null)
     window.scrollTo({ top: 0, behavior: 'instant' })
   },
+  // "Volver" de la pantalla: si se llegó desde la tienda, usa el historial
+  // para quedar donde estaba; si se entró directo, va al inicio.
+  goBack: () => {
+    if (window.history.state?.p) window.history.back()
+    else get().backToStore()
+  },
   syncFromHash: () => {
     const { view, selectedProductId, infoSlug = null, order = null } = readHash()
     set({ view, selectedProductId, infoSlug, order })
@@ -80,5 +102,10 @@ export const useUI = create((set, get) => ({
 }))
 
 if (typeof window !== 'undefined') {
+  if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual'
   window.addEventListener('hashchange', () => useUI.getState().syncFromHash())
+  window.addEventListener('popstate', (e) => {
+    useUI.getState().syncFromHash()
+    restoreScroll(e.state?.y || 0)
+  })
 }
